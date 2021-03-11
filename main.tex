@@ -1,0 +1,270 @@
+% Copyright 2021 Jacopo Maltagliati
+%
+% Use of this source code is governed by an EUPL-style
+% license that can be found in the LICENSE file or at
+% https://eupl.eu/1.2/en/.
+% A localized copy of this license can be found in the LICENSE.it file or at
+% https://eupl.eu/1.2/it/
+%
+% Portions of this document are subject to different licensing agreements,
+% see src/titlepage.tex for details.
+
+\documentclass[a4paper,12pt]{report}
+\usepackage[paper=a4paper,margin=1in]{geometry}
+\usepackage{graphicx}
+%\usepackage{hyperref}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage[utf8]{inputenc}
+\usepackage{setspace}
+\usepackage[english]{babel}
+%\usepackage{amssymb}
+%\usepackage{amsthm}
+%\usepackage{amsmath}
+%\usepackage{amstext}
+\usepackage{microtype}
+\usepackage{csquotes}
+\usepackage{bookmark}
+\usepackage{xpatch}
+%\usepackage[backend=biber, style=ieee]{biblatex}
+%\addbibresource{all.bib}
+\usepackage[square,comma,numbers]{natbib}
+\usepackage[nottoc]{tocbibind}
+\usepackage{sectsty}
+\chapternumberfont{\large}
+\chaptertitlefont{\huge}
+\renewcommand{\familydefault}{\sfdefault}
+\begin{document}
+% Titlepage
+\input{titlepage.tex}
+\newpage
+% Quote
+\vspace*{\stretch{1}}
+\begin{flushright}
+	\itshape
+	\begin{tabular}{@{}l@{}}
+		Sample Text\\
+                Sample Text
+	\end{tabular}
+\end{flushright}
+\vspace{\stretch{2}}
+\newpage
+% Toc
+\tableofcontents
+\newpage
+% Ch1
+\chapter{Summary}
+
+In the past ten years, mobile robotics as a field has been gaining a
+lot of traction: as technology evolves, building a mobile platform has
+become more and more feasible for anyone, including small research
+teams and hobbyists. However, there is still a lack of easily
+approachable real-time solutions able to manage the workload, as many of
+the available frameworks are not mature enough to offer fine-grained
+real time application control: this is why we ultimately decided to
+push the Linux kernel to its limits, studying its real-time
+capabilities and ease of use.
+
+\section{The problem}
+
+Imagine driving on an empty road at night while listening to classical
+music: it's been a very long day, and your consciousness gradually
+drifts to a peaceful slumber. Suddenly, an animal crosses the road:
+are you going to notice? Will you be able to stop in time? Now,
+consider a self-driving car in the same situation: what would happen
+if the control computer "dozed off" even for a fraction of a second?
+The user would probably not be able to stomp on the brakes fast enough
+to prevent the car from crashing.
+
+A possible solution to this problem is carefully designing a system
+built around existing technologies, such as real-time control,
+redundant hardware platforms, and failsafe mechanisms. However,
+creating a real-time system from the ground up tends to be very
+expensive and error-prone, as incorrect design or minor mistakes could
+lead to catastrophic failures such as the infamous
+Therac\citep{therac-25-accidents} incidents.
+
+For this reason, many software houses have been working on various
+commercial solutions since the 1980s that enabled programmers and
+engineers to deploy their application on proven grounds, thus reducing
+the time and effort needed to create a real-time
+application. Arguably, the best aspect of those systems was their
+widespread availability: for example, DEC's VAXeln used lightly
+modified VAX computers, and Quantum Computer Inc. QNX ran on
+consumer-grade hardware, including x86 processors. While the VAXeln is
+now a historical platform, QNX is still commercially available from
+BlackBerry Inc. and major companies such as Apple use it for
+their products\citep{time-carplay-qnx}.
+
+However, having always demonstrated an incredible flexibility, the
+ubiquitous Linux kernel is becoming a viable option for robotics and
+real-time usage, with both academic and commercial applications
+exploiting it like Tesla Motors, which maintains its own
+fork\citep{gh-tesla-linux}.
+
+Of course, this flexibility comes at the cost of reduced effectiveness
+in each specific situation, so why do both academic and commercial
+researchers decide to use Linux? For example:
+\begin{itemize}
+\item Linux is free and comes at no cost.
+\item Linux is open-source, so it might be tailored to specific needs
+  with the right expertise.
+\item Linux has a wide community of people constantly improving it,
+  ensuring constant updates without any support contract.
+\end{itemize}
+
+This is why, despite the shortcomings of the Linux kernel, we decided to adopt it for this project.
+
+\section{Current Implementation}
+
+At the moment, most of IRAlab's mobile platforms are controlled by a
+master node running Ubuntu Linux 16.04 LTS and the ROS
+framework. The ROS (Robot Operating System) framework is an open-source
+middleware, that is a set of software libraries and tools that help
+you build robot applications. ROS was created by Willow Garage as a
+rapid development platform for their PR2 robot and traces its roots
+into an even earlier effort by a team of researchers and students at
+Stanford University.
+
+Despite its name, ROS needs a host operating system: at the time of
+writing, it can run on either Linux, Windows or macOS, but since the
+behavior of each platform has notable differences, we'll focus only on
+the ROS/Linux combination. Please also note that ROS and ROS2 will
+be treated as separate entities throughout this report.
+
+\subsection{Description}
+
+Currently, the navigation stacks uses mainly uses ROS for abstraction
+and rapid prototyping: through the use of \textit{topics} and
+\textit{messages}, ROS provides a facility to let the users write
+small programs, called nodes, and make them communicate with each
+other. A master node, provided by the framework, acts as a central
+hub, keeping tabs on the state of the \textit{Computational
+  Graph}. Moreover, ROS provides extensive timestamping and data
+logging facilities, letting the user easily track, monitor and
+simulate a mobile platform's behavior.
+
+An in-depth analysis of the ROS functionalities and usage in an IRAlab
+mobile platform is outside the scope of this report, but it's received
+extensive coverage in works performed by Gerosa* and Di Lauro*.
+
+\subsection{Issues}
+
+The problem with ROS is, simply put, its clunkyness: while it's a very
+good rapid prototyping platform, there is no way to control the way
+that the whole thing is scheduled besides modifying the source code extensively,
+which would be an incredibly complex task. The authors of the software have
+acknowledged those problems themselves* and set out to release a newer,
+real-time friendly version of the platform.
+
+%% TODO: recupera vecchi appunti su ros1
+
+\section{ROS2}
+
+ROS version 2 is
+
+\section{Possible Solutions}
+
+To solve these problems we have identified a couple solutions
+
+\subsection{\texttt{PREEMPT\_RT}}
+
+TODO
+
+
+TODO
+
+\subsection{\texttt{SCHED\_EDF}}
+
+TODO
+\newpage
+% Ch2
+\chapter{Solution}
+
+Our custom solution, dubbed \texttt{rt-app} (as in Real-Time
+Application) is a demonstration of a viable approach for building
+real-time applications on Linux. 
+
+Written from scratch, the application currently leverages several APIs provided
+by Linux such as sched, time and pthreads.
+
+\section{Design}
+
+\texttt{rt-app}'s design is based around some components which are
+regarded as standard in the mobile robotics field, such as:
+\begin{itemize}
+\item The global planner: a component that keeps track
+\item The local planner: a component responsible for tracking 
+\item AMCL:
+\item The costmap:
+\item odometry: a component that constantly elaborates the data
+  received from various sources, such as the move base's wheel
+  encoders, to keep track of where the robot is going. 
+\end{itemize}
+
+Moreover, the following components have been envisioned:
+\begin{itemize}
+\item The pose manager: this is a pivotal component that manages the
+  lifecycle of a pose, and is able to merge and 
+\item The dispatcher:
+\end{itemize}
+
+Most of these operations are to be performed on-line, that is in a real-time
+fashion, except for global planning and thread dispatching, both of
+which happen once, when the application sets the modules up. 
+
+\subsection{Rationale}
+
+The application's design, per se, is not really important: our goal is
+demonstrating that replicating a ROS-like behavior is possible by only
+using facilities provided by the Linux kernel and the GNU stdlib.  
+
+\subsection{Planning}
+
+Given that the work required to implement such a complex application can't be possibly
+condensed in a three-month, one person stage, we've settled for
+splitting the work in several phases, namely:
+\begin{itemize}
+\item Phase 1: High level design and survey of the possible solutions
+\item Phase 2: Implementation of the dispatcher, at least one of the
+  modules and integration with an existing mobile platform. 
+\item Phase 3: Maintenance and gradual addition of more modules,
+  according to the programming guidelines and general architecture set
+  by the work performed in phase 2. 
+\end{itemize}
+
+Thus far, Phase 1 and a consistent portion of Phase 2 have been
+completed: the Odometry module has been implemented, on top of a
+simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}.
+IRAlab's Otto* mobile platform has been selected to be the test
+candidate, thus the Odometry module has been interfaced with a
+microcontroller emulating the protocol and message format used by
+Otto. The nature of this emulation will be discussed in a later
+paragraph. %% can I link the paragraph?
+
+\section{Implementation}
+\subsection{Threads}
+\subsection{Scheduling}
+\subsection{Timing}
+\subsection{Communications}
+\subsubsection{Serial}
+\subsection{Shared memory}
+\section{Future Development}
+
+\newpage
+% Ch2
+\chapter{Addendum}
+\section{Patching and building the kernel}
+\section{Emulating the mobile platform}
+\section{Processor features that are detrimental to RT performance}
+\section{Logging}
+\section{Filesystem}
+%% END Include Chapters
+%\printbibliography
+\bibliographystyle{unsrt}
+\bibliography{all}
+\end{document}
+
+
+
+
