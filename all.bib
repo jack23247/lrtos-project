@@ -9,12 +9,14 @@
 	doi     = {10.1109/MC.1993.274940}
 }
 
-@misc{time-carplay-qnx,
+@online{time-carplay-qnx,
   author = {D. {Amoth}},
+  organization = {Time},
   title = {Apple {CarPlay} runs on {BlackBerry} {QNX}},
   year = 2014,
-  howpublished = "\url{https://time.com/12452/gasp-apple-carplay-software-runs-on-blackberrys-qnx-platform/}",
-  lastchecked = {2021-03-03}
+  url = "https://time.com/12452/gasp-apple-carplay-software-runs-on-blackberrys-qnx-platform/",
+  lastchecked = {2021-03-03},
+  keywords = "apple,carplay,qnx"
 }
 
 @misc{gh-tesla-linux,
@@ -22,6 +24,28 @@
   organization = {Tesla Motors OSS},
   title = {Tesla {Linux} for {Tegra}},
   year = 2020,
-  howpublished = "\url{https://github.com/teslamotors/linux}",
-  lastchecked = {2021-03-03}
+  url = "https://github.com/teslamotors/linux",
+  lastchecked = {2021-03-03},
+  keywords="tesla,linux,automotive"
 }
+
+@article{survey-preempt-rt,
+author = {Reghenzani, Federico and Massari, Giuseppe and Fornaciari, William},
+title = {The Real-Time Linux Kernel: A Survey on PREEMPT\_RT},
+year = {2019},
+issue_date = {February 2019},
+publisher = {Association for Computing Machinery},
+address = {New York, NY, USA},
+volume = {52},
+number = {1},
+issn = {0360-0300},
+url = {https://doi.org/10.1145/3297714},
+doi = {10.1145/3297714},
+abstract = {The increasing functional and nonfunctional requirements of real-time applications, the advent of mixed criticality computing, and the necessity of reducing costs are leading to an increase in the interest for employing COTS hardware in real-time domains. In this scenario, the Linux kernel is emerging as a valuable solution on the software side, thanks to the rich support for hardware devices and peripherals, along with a well-established programming environment. However, Linux has been developed as a general-purpose operating system, followed by several approaches to introduce actual real-time capabilities in the kernel. Among these, the PREEMPT_RT patch, developed by the kernel maintainers, has the goal to increase the predictability and reduce the latencies of the kernel directly modifying the existent kernel code. This article aims at providing a survey of the state-of-the-art approaches for building real-time Linux-based systems, with a focus on PREEMPT_RT, its evolution, and the challenges that should be addressed in order to move PREEMPT_RT one step ahead. Finally, we present some applications and use cases that have already benefited from the introduction of this patch.},
+journal = {ACM Comput. Surv.},
+month = feb,
+articleno = {18},
+numpages = {36},
+keywords = {Linux, commercial-off-the-shelf}
+}
+

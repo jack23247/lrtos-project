@@ -26,8 +26,8 @@
 \usepackage{csquotes}
 \usepackage{bookmark}
 \usepackage{xpatch}
-\usepackage[square,comma,numbers]{natbib}
-\usepackage[nottoc]{tocbibind}
+\usepackage[backend=biber, sorting=none]{biblatex}
+\addbibresource{all.bib}
 \usepackage{sectsty}
 \chapternumberfont{\large}
 \chaptertitlefont{\huge}
@@ -59,11 +59,11 @@ In the past ten years, mobile robotics as a field has been gaining a lot of trac
 
 Imagine driving on an empty road at night while listening to classical music: it's been a very long day, and your consciousness gradually drifts to a peaceful slumber. Suddenly, an animal crosses the road: are you going to notice? Will you be able to stop in time? Now, consider a self-driving car in the same situation: what would happen if the control computer "dozed off" even for a fraction of a second? The user would probably not be able to stomp on the brakes fast enough to prevent the car from crashing.
 
-A possible solution to this problem is carefully designing a system built around existing technologies, such as real-time control, redundant hardware platforms, and failsafe mechanisms. However, creating a real-time system from the ground up tends to be very expensive and error-prone, as incorrect design or minor mistakes could lead to catastrophic failures such as the infamous Therac\citep{therac-25-accidents} incidents.
+A possible solution to this problem is carefully designing a system built around existing technologies, such as real-time control, redundant hardware platforms, and failsafe mechanisms. However, creating a real-time system from the ground up tends to be very expensive and error-prone, as incorrect design or minor mistakes could lead to catastrophic failures such as the infamous Therac\cite{therac-25-accidents} incidents.
 
-For this reason, many software houses have been working on various commercial solutions since the 1980s that enabled programmers and engineers to deploy their application on proven grounds, thus reducing the time and effort needed to create a real-time application. Arguably, the best aspect of those systems was their widespread availability: for example, DEC's VAXeln used lightly modified VAX computers, and Quantum Computer Inc. QNX ran on consumer-grade hardware, including x86 processors. While the VAXeln is now a historical platform, QNX is still commercially available from BlackBerry Inc. and major companies such as Apple use it for their products\citep{time-carplay-qnx}.
+For this reason, many software houses have been working on various commercial solutions since the 1980s that enabled programmers and engineers to deploy their application on proven grounds, thus reducing the time and effort needed to create a real-time application. Arguably, the best aspect of those systems was their widespread availability: for example, DEC's VAXeln used lightly modified VAX computers, and Quantum Computer Inc. QNX ran on consumer-grade hardware, including x86 processors. While the VAXeln is now a historical platform, QNX is still commercially available from BlackBerry Inc. and major companies such as Apple use it for their products\cite{time-carplay-qnx}.
 
-However, having always demonstrated an incredible flexibility, the ubiquitous Linux kernel is becoming a viable option for robotics and real-time usage, with both academic and commercial applications exploiting it like Tesla Motors, which maintains its own fork\citep{gh-tesla-linux}.
+However, having always demonstrated an incredible flexibility, the ubiquitous Linux kernel is becoming a viable option for robotics and real-time usage, with both academic and commercial applications exploiting it like Tesla Motors, which maintains its own fork\cite{gh-tesla-linux}.
 
 Of course, this flexibility comes at the cost of reduced effectiveness in each specific situation, so why do both academic and commercial researchers decide to use Linux? For example:
 \begin{itemize}
@@ -90,7 +90,7 @@ An in-depth analysis of the ROS functionalities and usage in an IRAlab mobile pl
 
 \subsection{Issues}
 
-The problem with ROS is, simply put, its clunkyness: while it's a very good rapid prototyping platform, there is no way to control the way that the whole thing is scheduled besides modifying the source code extensively, which would be an incredibly complex task. The authors of the software have acknowledged those problems themselves* and set out to release a newer, real-time friendly version of the platform.
+The problem with ROS is, simply put, its clunkyness: while it's a very good rapid prototyping platform, there is no way to control the way that the whole thing is scheduled besides modifying the source code extensively, which would be an incredibly complex task. The authors of the software have acknowledged those problems themselves*<prt authors> and set out to release a newer, real-time friendly version of the platform.
 
 %% which problems does ros bring to the table
 
@@ -100,13 +100,14 @@ To achieve precise real-time control of our application we decided to explore th
 
 \subsection{\texttt{PREEMPT\_RT}}
 
-%% brief history of p-rt
-
-%% who's behind it?
+%% brief history of p-rt: who's behind it?
+\texttt{PREEMPT\_RT} is a patch for the Linux kernel introduced in 2005 with the goal of reducing the latency and increasing the determinism of the kernel\cite{survey-preempt-rt}. One side effect of this patch was dramatically improving the performance of the MP implementation*<prt authors>.
 
 %% how does preempt-rt work?
+PRT works by... (two-tier architecture, ...)
 
 %% how can we determine the benefits of preempt-rt?
+The benefits of PRT are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are immense*<tesi poliTO>.
 
 \subsection{ROS2}
 
@@ -192,7 +193,7 @@ Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the O
 
 \newpage
 % Ch3
-\chapter{Addendum}
+\chapter{Implementation Issues}
 \section{Patching and building the kernel}
 \section{Emulating the mobile platform}
 \section{Processor features that are detrimental to RT performance}
@@ -201,8 +202,7 @@ Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the O
 \section{Notes on CPUSETS} %% maybe it's better off here?
 
 % Tail
-\bibliographystyle{unsrt}
-\bibliography{all}
+\printbibliography
 \end{document}
 
 
