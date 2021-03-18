@@ -39,11 +39,11 @@
 % Quote
 \vspace*{\stretch{1}}
 \begin{flushright}
-	\itshape
-	\begin{tabular}{@{}l@{}}
-		Sample Text\\
-                Sample Text
-	\end{tabular}
+  \itshape
+  \begin{tabular}{@{}l@{}}
+    Sample Text \\
+    Sample Text
+  \end{tabular}
 \end{flushright}
 \vspace{\stretch{2}}
 \newpage
@@ -67,11 +67,11 @@ However, having always demonstrated an incredible flexibility, the ubiquitous Li
 
 Of course, this flexibility comes at the cost of reduced effectiveness in each specific situation, so why do both academic and commercial researchers decide to use Linux? For example:
 \begin{itemize}
-\item Linux is free and comes at no cost.
-\item Linux is open-source, so it might be tailored to specific needs
-  with the right expertise.
-\item Linux has a wide community of people constantly improving it,
-  ensuring constant updates without any support contract.
+  \item Linux is free and comes at no cost.
+  \item Linux is open-source, so it might be tailored to specific needs
+        with the right expertise.
+  \item Linux has a wide community of people constantly improving it,
+        ensuring constant updates without any support contract.
 \end{itemize}
 
 This is why, despite the shortcomings of the Linux kernel, we decided to adopt it for this project.
@@ -96,7 +96,7 @@ The problem with ROS is, simply put, its clunkyness: while it's a very good rapi
 
 \section{Possible Solutions}
 
-To achieve precise real-time control of our application we decided to explore the capabilities of the RT patch, which greatly reduces the latency of the Linux kernel, thus giving the programmer more control on the timing of a real-time application. 
+To achieve precise real-time control of our application we decided to explore the capabilities of the RT patch, which greatly reduces the latency of the Linux kernel, thus giving the programmer more control on the timing of a real-time application.
 
 \subsection{\texttt{PREEMPT\_RT}}
 
@@ -110,6 +110,7 @@ PRT works by... (two-tier architecture, ...)
 The benefits of PRT are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are immense*<tesi poliTO>.
 
 \subsection{ROS2}
+aaaa
 
 %% todo check ros2 toy and release
 ROS version 2 is the new generation of the ROS platform, which at the time of writing has been undergoing development since 20xx and is now at release x. ROS2 sets
@@ -122,7 +123,8 @@ ROS version 2 is the new generation of the ROS platform, which at the time of wr
 
 \subsection{\texttt{SCHED\_EDF}}
 
-%% brief history of sched-edf and who's behind it
+%% brief history of sched-edf and who's b
+aaaaehind it
 
 %% how does sched-edf work
 
@@ -140,7 +142,7 @@ ROS version 2 is the new generation of the ROS platform, which at the time of wr
 
 Our custom solution, dubbed \texttt{rt-app} (as in Real-Time
 Application) is a demonstration of a viable approach for building
-real-time applications on Linux. 
+real-time applications on Linux.
 
 Written from scratch, the application currently leverages several APIs provided
 by Linux such as sched, time and pthreads.
@@ -149,35 +151,35 @@ by Linux such as sched, time and pthreads.
 
 \texttt{rt-app}'s design is based around some components which are regarded as standard in the mobile robotics field, such as:
 \begin{itemize}
-\item The global planner: a component that keeps track
-\item The local planner: a component responsible for tracking 
-\item AMCL:
-\item The costmap:
-\item odometry: a component that constantly elaborates the data received from various sources, such as the move base's wheel encoders, to keep track of where the robot is going. 
+  \item The global planner: a component that keeps track
+  \item The local planner: a component responsible for tracking
+  \item AMCL:
+  \item The costmap:
+  \item odometry: a component that constantly elaborates the data received from various sources, such as the move base's wheel encoders, to keep track of where the robot is going.
 \end{itemize}
 
 Moreover, the following components have been envisioned:
 \begin{itemize}
-\item The pose manager, which is a pivotal component that manages the lifecycle of a pose, its duty is to control the flow of poses going from odometry to the local planner and backfeed adjusted poses coming from AMCL.
-\item The dispatcher, which takes care of initializing threads and resources, and is responsible for terminating the application once all workers have finished their job.
+  \item The pose manager, which is a pivotal component that manages the lifecycle of a pose, its duty is to control the flow of poses going from odometry to the local planner and backfeed adjusted poses coming from AMCL.
+  \item The dispatcher, which takes care of initializing threads and resources, and is responsible for terminating the application once all workers have finished their job.
 \end{itemize}
 
 Most of these operations are to be performed on-line, that is in a real-time fashion, except for global planning and thread dispatching, both of which happen once, when the dispatcher sets the modules up.
 
 \subsection{Rationale}
 
-The main goal behind \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU stdlib: thus, in the following sections we'll focus more on the implementation rather than the design process.   
+The main goal behind \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU stdlib: thus, in the following sections we'll focus more on the implementation rather than the design process.
 
 \subsection{Planning}
 
 Given that the work required to implement such a complex application can't be possibly condensed in such a short timeframe, we've settled for splitting the work in several phases:
 \begin{itemize}
-\item Phase 1: High level design and survey of the possible solutions
-\item Phase 2: Implementation of the dispatcher, at least one of the
-  modules and integration with an existing mobile platform. 
-\item Phase 3: Maintenance and gradual addition of more modules,
-  according to the programming guidelines and general architecture set
-  by the work performed in phase 2. 
+  \item Phase 1: High level design and survey of the possible solutions
+  \item Phase 2: Implementation of the dispatcher, at least one of the
+        modules and integration with an existing mobile platform.
+  \item Phase 3: Maintenance and gradual addition of more modules,
+        according to the programming guidelines and general architecture set
+        by the work performed in phase 2.
 \end{itemize}
 
 Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto* mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a microcontroller emulating the protocol and message format used by Otto. The nature of this emulation will be discussed in a later paragraph. %% can I link the paragraph?
