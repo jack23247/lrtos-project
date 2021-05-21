@@ -100,7 +100,8 @@ Despite its name, ROS needs a host operating system, which can be either Linux, 
 
 Currently, IRAlab mainly uses a modified ROS navigation stack for abstraction and rapid prototyping: through the use of \textit{topics} and \textit{messages}, ROS provides a facility to let the users write small programs, called \textit{nodes}, and make them communicate with each other. A \textit{master node}, provided by the framework, acts as a central hub, keeping tabs on the state of the \textit{Computational Graph}. Moreover, ROS provides extensive \textit{timestamping} and data logging facilities, letting the user easily track, monitor and simulate a mobile platform's behavior.
 
-An in-depth analysis of the ROS functionalities and usage in the context of our mobile platforms is beyond the scope of this report, but the same topic has received extensive coverage in earlier works by Gerosa* and Di Lauro*.
+An in-depth analysis of the ROS functionalities and usage in the context of our mobile platforms is beyond the scope of this report, but the same topic has received extensive coverage in earlier works by Gerosa* and Di Lauro\cite{fdila-bs-otto}.
+%% todo dilauro -> ???
 
 \subsection{Issues}
 
@@ -122,18 +123,18 @@ To achieve precise real-time control of our application we decided to explore th
 %% how does preempt-rt work?
 Over the course of the last 16 years, many features that help the kernel behave in a more real-time way have trickled down from the RT patch to the mainline. Some notable examples are:
 
+%% todo
 \begin{itemize}
     \item The removal of spinlocks
     \item The introduction of Threaded Interrupt Handlers
-    \item The quick brown fox
 \end{itemize}
 
 A proper analysis of the Real-Time patch has been performed by Rezenghani et al.\cite{survey-preempt-rt}.
 
 %% how can we determine the benefits of preempt-rt?
-The benefits of \texttt{PREEMPT\_RT}  are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are notable *
+The benefits of \texttt{PREEMPT\_RT}  are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are notable *%% todo: cite
 
-It's important to note that, while \texttt{PREEMPT\_RT} has some competition in the real-time Linux market, it's the only solution that does not involve a co-kernel approach: this ensures that any program written and compiled for mainline Linux will run unmodified on a kernel patched with \texttt{PREEMPT\_RT}, while benefiting from the various improvements brought on by the patch.   
+It's important to note that, while \texttt{PREEMPT\_RT} has some competition in the real-time Linux market, it's the only solution that does not involve a co-kernel approach: this ensures that any program written and compiled for mainline Linux will run unmodified on a kernel patched with \texttt{PREEMPT\_RT}, while benefiting from the various improvements brought on by the patch. 
 
 \subsection{ROS2}
 
@@ -182,7 +183,7 @@ Refer to *<sched(7)>.
 % Ch2
 \chapter{Solution}
 
-Our custom solution, dubbed \texttt{rt-app} (as in Real-Time Application) is a demonstration of a viable approach for building real-time control systems on Linux.
+Our custom solution, named \texttt{rt-app}, is a demonstration of what we believe is a viable approach for building real-time control systems on Linux.
 
 Written from scratch, the demo currently leverages several APIs provided by Linux such as \texttt{sched}, \texttt{time} and \texttt{pthreads}.
 
@@ -217,7 +218,7 @@ Given that the work required to implement such a complex application can't be po
   \item Phase 3: Maintenance and gradual addition of more modules, according to the programming guidelines and general architecture set by the work performed in phase 2.
 \end{itemize}
 
-Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a the microcontroller that is responsible for driving Otto's motors and encoders through the serial port.
+Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto\cite{fdila-bs-otto} mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a the microcontroller that is responsible for driving Otto's motors and encoders through the serial port.
 
 \section{Implementation}
 
