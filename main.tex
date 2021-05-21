@@ -26,7 +26,9 @@
 \usepackage{csquotes}
 \usepackage{bookmark}
 \usepackage{xpatch}
+\usepackage{listings}
 \usepackage[backend=biber, sorting=none]{biblatex}
+\hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue, pdftitle={Linux as a Real-Time Operating System}}
 \addbibresource{all.bib}
 \usepackage[color=green,textsize=tiny]{todonotes}
 \usepackage{sectsty}
@@ -42,8 +44,8 @@
 \begin{flushright}
   \itshape
   \begin{tabular}{@{}l@{}}
-    Sample Text \\
-    Sample Text
+    In Fulvio Testi 175 we trust \\
+    2017-2020
   \end{tabular}
 \end{flushright}
 \vspace{\stretch{2}}
@@ -51,6 +53,17 @@
 % Toc
 \tableofcontents
 \newpage
+% Ch0
+\chapter*{Acknowledgements}
+A special thanks for the continued support and previous work on Otto, ROS and the USAD platform goes to the IRAlab team:
+Simone Fontana
+Federica di Lauro
+Carlo Radice 
+Giovanni Capra
+Riccardo Curnis
+And to the former IRAlab member:
+Augusto Luis Ballardini
+
 % Ch1
 \chapter{Summary}
 
@@ -75,29 +88,27 @@ Of course, this flexibility comes at the cost of reduced effectiveness in each s
         ensuring constant updates without any support contract.
 \end{itemize}
 
-This is why, despite the shortcomings of the Linux kernel, we decided to adopt it for this project.
+These, along with the fact that IRAlab has been running Linux on control systems for several years, are the reasons why we decided to adopt it for this project.
 
 \section{Current Implementation}
 
 At the moment, most of IRAlab's mobile platforms are controlled by a master node running Ubuntu Linux 16.04 LTS and the ROS framework. The ROS (Robot Operating System) framework is an open-source middleware, that is a set of software libraries and tools that help you build robot applications. ROS was created by Willow Garage as a rapid development platform for their PR2 robot and traces its roots into an even earlier effort by a team of researchers and students at Stanford University.
 
-Despite its name, ROS needs a host operating system: at the time of writing, it can run on either Linux, Windows or macOS, but since the behavior of each platform has notable differences, we'll focus only on the ROS/Linux combination. Please also note that ROS and ROS2 will be treated as separate entities throughout this report.
+Despite its name, ROS needs a host operating system, which can be either Linux, Windows or macOS. For simplicity, throughout this report we'll focus only on the ROS/Linux combination.
 
 \subsection{Description}
 
-Currently, the navigation stacks uses mainly uses ROS for abstraction and rapid prototyping: through the use of \textit{topics} and \textit{messages}, ROS provides a facility to let the users write small programs, called nodes, and make them communicate with each other. A master node, provided by the framework, acts as a central hub, keeping tabs on the state of the \textit{Computational Graph}. Moreover, ROS provides extensive timestamping and data logging facilities, letting the user easily track, monitor and simulate a mobile platform's behavior.
+Currently, IRAlab mainly uses a modified ROS navigation stack for abstraction and rapid prototyping: through the use of \textit{topics} and \textit{messages}, ROS provides a facility to let the users write small programs, called \textit{nodes}, and make them communicate with each other. A \textit{master node}, provided by the framework, acts as a central hub, keeping tabs on the state of the \textit{Computational Graph}. Moreover, ROS provides extensive \textit{timestamping} and data logging facilities, letting the user easily track, monitor and simulate a mobile platform's behavior.
 
-An in-depth analysis of the ROS functionalities and usage in an IRAlab mobile platform is outside the scope of this report, but it's received extensive coverage in works performed by Gerosa* and Di Lauro*.
+An in-depth analysis of the ROS functionalities and usage in the context of our mobile platforms is beyond the scope of this report, but the same topic has received extensive coverage in earlier works by Gerosa* and Di Lauro*.
 
 \subsection{Issues}
 
-The problem with ROS is, simply put, its clunkyness: while it's a very good rapid prototyping platform, there is no way to control the way that the whole thing is scheduled besides modifying the source code extensively, which would be an incredibly complex task. The authors of the software have acknowledged those problems themselves*<prt authors> and set out to release a newer, real-time friendly version of the platform.
+The problem we encountered with ROS is its complexity: while it's a easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply modifying the source code extensively, which is a very complex task. The authors of the software have acknowledged those problems and set out to release a newer, real-time friendly version of the platform\cite{ros2-realtime-intro}.
 
-%% which problems does ros bring to the table
-\begin{itemize}
-    \item Precisely controlling timing in ROS is next to impossible due to the fact that the tasks in ROS are controlled by the master node
-    \item Many parts of ROS are written in Python, an interpreted (or rather JIT-compiled) language. This class of languages are notoriously hard to control in real-time environments
-\end{itemize}
+Moreover, the presence of a Master node and an inter-node communication protocol based on handshaking (much akin to how MTTQ operates) makes it difficult to precisely control timing, unless the whole node setup is performed offline.
+
+The real problem, however, comes from the fact that many any parts of ROS are written in Python, which is an interpreted (or rather JIT-compiled) language. This class of languages are notoriously hard to control in real-time environments, because they are not designed with real-time constraints in mind and employ facilities like non-deterministic garbage collection and dynamic allocation that could be avoided entirely by using a compiled language such as C. Explaining how the Python garbage collector works is beyond the scope of this report, but a cursory introduction is provided by the Python Developer's Guide\cite{python-devguide-gc}.
 
 \section{Possible Solutions}
 
@@ -106,13 +117,23 @@ To achieve precise real-time control of our application we decided to explore th
 \subsection{\texttt{PREEMPT\_RT}}
 
 %% brief history of p-rt: who's behind it?
-\texttt{PREEMPT\_RT} is a patch for the Linux kernel introduced in 2005 with the goal of reducing the latency and increasing the determinism of the kernel\cite{survey-preempt-rt}. One side effect of this patch was dramatically improving the performance of the MP implementation*<prt authors>.
+\texttt{PREEMPT\_RT} is a patch for the Linux kernel introduced in 2005 with the goal of reducing the latency and increasing the determinism of the kernel. The patch was not immediately recognized by the Linux kernel developers, but it's slowly gained traction and it's hopefully going to be merged into mainline soon.\cite{lwn-rt-future}
 
 %% how does preempt-rt work?
-PRT works by... (two-tier architecture, ...)
+Over the course of the last 16 years, many features that help the kernel behave in a more real-time way have trickled down from the RT patch to the mainline. Some notable examples are:
+
+\begin{itemize}
+    \item The removal of spinlocks
+    \item The introduction of Threaded Interrupt Handlers
+    \item The quick brown fox
+\end{itemize}
+
+A proper analysis of the Real-Time patch has been performed by Rezenghani et al.\cite{survey-preempt-rt}.
 
 %% how can we determine the benefits of preempt-rt?
-The benefits of PRT are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are immense*<tesi poliTO>.
+The benefits of \texttt{PREEMPT\_RT}  are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are notable *
+
+It's important to note that, while \texttt{PREEMPT\_RT} has some competition in the real-time Linux market, it's the only solution that does not involve a co-kernel approach: this ensures that any program written and compiled for mainline Linux will run unmodified on a kernel patched with \texttt{PREEMPT\_RT}, while benefiting from the various improvements brought on by the patch.   
 
 \subsection{ROS2}
 
@@ -120,7 +141,7 @@ The benefits of PRT are invaluable: at the cost of throughput, unbounded latenci
 ROS version 2 is the new generation of the ROS platform, which at the time of writing has been undergoing development since 20xx and is now at release x.
 
 %% what are the benefits of using ros2?
-ROS2 has been designed with real time constraints in mind to solve the shortcomings of ROS. ROS2 pipelines tasks in a very different way and uses an enterprise-grade communications subsystem that is much more RT-friendly. ROS2 uses a single process to control and schedule tasks, spawning them as threads.
+ROS2 has been designed with real time constraints in mind to solve the shortcomings of ROS, as it pipelines tasks in a very different way and uses an enterprise-grade communications subsystem that is much more RT-friendly. ROS2 uses a single process to control and schedule tasks, spawning them as threads.
 
 %% why would keeping ros be important?
 Keeping ROS would've enabled us to benefit from real-time improvements without the burden of porting the whole application stack to a new platform, thus reducing turnaround time significantly. 
@@ -145,6 +166,7 @@ The CBS algorithm is used in conjunction with EDF for...
 %% how does sched-edf work
 The algorithms behind SCHED\_EDF are described by *<abeni, buttazzo>.
 
+%% sposta in edf
 \subsubsection{Scheduling classes in Linux}
 
 Scheduling classes in Linux are a system to provide different scheduling algorithms for different kinds of tasks while maintaining a specific hierarchy 
@@ -153,23 +175,23 @@ Scheduling classes in Linux are a system to provide different scheduling algorit
 The priority of the various scheduling classes is as follows:
 STOP > DL > RT > CFS > IDLE > NULL
 
-CFS replaced the older O(1) scheduler as the default scheduler in <!kernel version, year> Refer to *<sched(7)>.
+CFS replaced the older O(1) scheduler as the default scheduler in Linux 2.6.22 %%https://lwn.net/Articles/241085/
+Refer to *<sched(7)>.
 
 \newpage
 % Ch2
 \chapter{Solution}
 
-Our custom solution, dubbed \texttt{rt-app} (as in Real-Time Application) is a demonstration of a viable approach for building real-time applications on Linux.
+Our custom solution, dubbed \texttt{rt-app} (as in Real-Time Application) is a demonstration of a viable approach for building real-time control systems on Linux.
 
-Written from scratch, the application currently leverages several APIs provided by Linux such as sched, time and pthreads.
+Written from scratch, the demo currently leverages several APIs provided by Linux such as \texttt{sched}, \texttt{time} and \texttt{pthreads}.
 
 \section{Design}
 
-\texttt{rt-app}'s design is based around some components which are regarded as standard in the mobile robotics field, such as:
+\texttt{rt-app}'s design is based around some components which are regarded as 
+standard in the mobile robotics field, such as:
 \begin{itemize}
-  \item The global planner: a component that keeps track
   \item The local planner: a component responsible for tracking
-  \item AMCL:
   \item The costmap:
   \item odometry: a component that constantly elaborates the data received from various sources, such as the move base's wheel encoders, to keep track of where the robot is going.
 \end{itemize}
@@ -184,7 +206,7 @@ Most of these operations are to be performed on-line, that is in a real-time fas
 
 \subsection{Rationale}
 
-The main goal behind \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU stdlib: thus, in the following sections we'll focus more on the implementation rather than the design process.
+The main goal behind \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU standard library: thus, in the following sections we'll focus more on the implementation rather than the design process.
 
 \subsection{Planning}
 
@@ -195,25 +217,44 @@ Given that the work required to implement such a complex application can't be po
   \item Phase 3: Maintenance and gradual addition of more modules, according to the programming guidelines and general architecture set by the work performed in phase 2.
 \end{itemize}
 
-Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto* mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a microcontroller emulating the protocol and message format used by Otto. The nature of this emulation will be discussed in a later paragraph. %% can I link the paragraph?
+Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a the microcontroller that is responsible for driving Otto's motors and encoders through the serial port.
 
 \section{Implementation}
-\subsection{Threads}
 
-Threads are used for running \b{modules}, which are separately scheduled units of the application that interact with each other via IPC methods. Modules, in turn, can use \b{adapters} to communicate with peripherals and \b{helpers} for housekeeping tasks.
+\subsection{Components}
 
-\subsection{Scheduling}
+Three distinct types of logic components have been devised:
+\begin{itemize}
+    \item Modules: comprised of both a header and a source file, the modules contain the schedulable units of the application. Each module contains at least an entry point function, which will be executed when scheduling, and a number of other functions necessary to perform one or more specific tasks.   
+    \item Helpers: headers that provide inline functions that wrap around system calls and kernel facilities in a standard way.
+    \item Adapters: portions of code that provide an high-level interface to an hardware platform like Otto.
+\end{itemize}
 
-Each module schedules itself. \todo{This might change in the future!}
+The only exceptions to this rule are the \texttt{main.c} file, which provides a scheduling facility, and the \texttt{config.h} file, which contains preprocessor definitions used to change the behavior of the application for debugging purposes.
+
+\subsection{Threads and scheduling}
+
+Each module contains a schedulable unit, a portion of code that is capable of running in a separate thread, and a number of scheduling parameters that will be passed to a \texttt{sched\_setattr()} call to modify the scheduling attributes of the module's thread.
+
+This architecture is flexible because it lets the programmer decide how a specific module will be scheduled by the system, and using which scheduler. When using \texttt{SCHED\_DEADLINE}, for example, the programmer can provide a \textit{deadline}, a \textit{runtime} and a \textit{period}: those parameters will be used to control when the thread will be selected for execution and after which amount of time it's expected to terminate (at worst) by the scheduler.
 
 \subsection{Timing}
 
-Timing is a critical part of the application
+As usual with systems interacting with hardware sensors, timing is a critical part of our demonstration: a simple timing system, wrapping the \texttt{clock\_*()} family of system calls, has been implemented to readily provide information such as global time deltas in nanoseconds that can be used to consistently timestamp information coming from the adapters. This collection of inline functions and globals is an helper, and resides into the \texttt{h\_time.h} header. 
+
+To keep track of the time, the Intel x86\_64 (AMD64) architecture provides access to a series of hardware clocks via the \texttt{RDTSC} and \texttt{RDTSCP} instructions. These instructions allow the kernel to query the \texttt{TSC} (Time Stamp Counter) internal register to provide us with a reliable hardware time source. However, the \texttt{TSC} register was introduced with the Pentium architecture and with the advent of technologies like out-of-order execution, hybernation, and multi-core processing it is not advisable to rely on it anymore. This problem, and a number of possible solutions, have been discussed both in official documentation\cite{intel-rdtsc-bench} and articles from notable sources\cite{ms-rdtsc-issues}.
+
+Conveniently, the Linux kernel works around this problem for us: to accurately advance its internal timers the kernel uses several clock sources and an unit of measurement called \textit{jiffy}, which is tied to the value of `HZ` and is fine-tuned to each architecture's needs\cite{elinux-hrts}. Thanks to this complex architecture, which is described in depth by the manual pages\cite{man-clock-getres-2}, we can trust the values provided by system calls such as \texttt{clock\_gettime()} because they're consistent enough to provide us usable values in the tens of nanoseconds range.
+
+Besides keeping a time base and calculating deltas, the \texttt{h\_time} helper mostly performs conversions: since the standard library uses \texttt{timespec} structures to pass values around, \texttt{h\_time} is also responsible for translating \texttt{timespec}s to nanoseconds where needed.  
 
 \subsection{Communications}
+
+As we stated earlier, the \textit{adapters} provide a clean way to interact with various peripherals.
+
 \subsubsection{Serial}
 
-The application talks to the movebase via serial (UART) comms over /dev/ttyUSB0 at 115200 Baud using the \texttt{a\_otto.\{c,h\}} adapter.
+Currently, the demo application issues command to the Otto mobile platform via and FTDI UART using serial communications at 9600 Baud. The \texttt{a\_otto} adapter provides functions that wrap around the read() and write() system calls to communicate with Otto's microcontroller over the serial line: before being sent, the data is encoded using the NanoPB library,  
 
 \subsection{Shared memory}
 
