@@ -44,8 +44,8 @@
 \begin{flushright}
   \itshape
   \begin{tabular}{@{}l@{}}
-    In Fulvio Testi 175 we trust \\
-    2017-2020
+    In Fulvio Testi 175 we trust. \\
+    MP,MS,MT,AM,MC 2017-2020
   \end{tabular}
 \end{flushright}
 \vspace{\stretch{2}}
@@ -53,16 +53,11 @@
 % Toc
 \tableofcontents
 \newpage
+% Set paragraph spacing so our eyes don't pop while reading
+\setlength{\parskip}{1em}
 % Ch0
 \chapter*{Acknowledgements}
-A special thanks for the continued support and previous work on Otto, ROS and the USAD platform goes to the IRAlab team:
-Simone Fontana
-Federica di Lauro
-Carlo Radice 
-Giovanni Capra
-Riccardo Curnis
-And to the former IRAlab member:
-Augusto Luis Ballardini
+A special thanks for the continued support and previous work on Otto, ROS and the USAD platform goes to Domenico Sorrenti, Federica Di Lauro, Simone Fontana, Carlo Radice, Giovanni Capra and Riccardo Curnis of the IRAlab team, and to the former IRAlab member Augusto Luis Ballardini.
 
 % Ch1
 \chapter{Summary}
@@ -75,41 +70,37 @@ Imagine driving on an empty road at night while listening to classical music: it
 
 A possible solution to this problem is carefully designing a system built around existing technologies, such as real-time control, redundant hardware platforms, and failsafe mechanisms. However, creating a real-time system from the ground up tends to be very expensive and error-prone, as incorrect design or minor mistakes could lead to catastrophic failures such as the infamous Therac\cite{therac-25-accidents} incidents.
 
-For this reason, many software houses have been working on various commercial solutions since the 1980s that enabled programmers and engineers to deploy their application on proven grounds, thus reducing the time and effort needed to create a real-time application. Arguably, the best aspect of those systems was their widespread availability: for example, DEC's VAXeln used lightly modified VAX computers, and Quantum Computer Inc. QNX ran on consumer-grade hardware, including x86 processors. While the VAXeln is now a historical platform, QNX is still commercially available from BlackBerry Inc. and major companies such as Apple use it for their products\cite{time-carplay-qnx}.
+For this reason, many software houses have been working on various commercial solutions since the 1980s that enabled programmers and engineers to deploy their application on proven grounds, thus reducing the time and effort needed to create a real-time application. Arguably, the best aspect of those systems was their widespread availability: for example, DEC's VAXeln used lightly modified VAX computers, and Quantum Computer Inc. QNX ran on consumer-grade hardware, including x86 processors. While the VAXeln is now a historical platform, QNX is still commercially available from BlackBerry Limited and major companies such as Apple use it for their products\cite{time-carplay-qnx}.
 
 However, having always demonstrated an incredible flexibility, the ubiquitous Linux kernel is becoming a viable option for robotics and real-time usage, with both academic and commercial applications exploiting it like Tesla Motors, which maintains its own fork\cite{gh-tesla-linux}.
 
 Of course, this flexibility comes at the cost of reduced effectiveness in each specific situation, so why do both academic and commercial researchers decide to use Linux? For example:
 \begin{itemize}
   \item Linux is free and comes at no cost.
-  \item Linux is open-source, so it might be tailored to specific needs
-        with the right expertise.
-  \item Linux has a wide community of people constantly improving it,
-        ensuring constant updates without any support contract.
+  \item Linux is open-source, so it might be tailored to specific needs with the right expertise.
+  \item Linux has a wide community of people constantly improving it, ensuring constant updates without any support contract.
 \end{itemize}
 
 These, along with the fact that IRAlab has been running Linux on control systems for several years, are the reasons why we decided to adopt it for this project.
 
 \section{Current Implementation}
 
-At the moment, most of IRAlab's mobile platforms are controlled by a master node running Ubuntu Linux 16.04 LTS and the ROS framework. The ROS (Robot Operating System) framework is an open-source middleware, that is a set of software libraries and tools that help you build robot applications. ROS was created by Willow Garage as a rapid development platform for their PR2 robot and traces its roots into an even earlier effort by a team of researchers and students at Stanford University.
-
-Despite its name, ROS needs a host operating system, which can be either Linux, Windows or macOS. For simplicity, throughout this report we'll focus only on the ROS/Linux combination.
+At the moment, most of IRAlab's mobile platforms are controlled by a master node running Ubuntu Linux 16.04 LTS and the ROS framework, which was created by Willow Garage as a rapid development platform for their PR2 robot and traces its roots into an even earlier effort by a team of researchers and students at Stanford University. The name "Robot Operating System" is misleading: in fact, ROS is mostly an open-source middleware, that is a set of software libraries and tools that help you build robot applications, which actually needs an underlying operating system to run: currently, it may do so on both Unix-like operating systems such as Ubuntu GNU/Linux, BlackBerry QNX\cite{qnx-ros} and Apple macOS, and on some Microsoft Windows versions. For simplicity, throughout this report we'll use the term "ROS" to refer to the ROS+Linux combination.
 
 \subsection{Description}
 
 Currently, IRAlab mainly uses a modified ROS navigation stack for abstraction and rapid prototyping: through the use of \textit{topics} and \textit{messages}, ROS provides a facility to let the users write small programs, called \textit{nodes}, and make them communicate with each other. A \textit{master node}, provided by the framework, acts as a central hub, keeping tabs on the state of the \textit{Computational Graph}. Moreover, ROS provides extensive \textit{timestamping} and data logging facilities, letting the user easily track, monitor and simulate a mobile platform's behavior.
 
 An in-depth analysis of the ROS functionalities and usage in the context of our mobile platforms is beyond the scope of this report, but the same topic has received extensive coverage in earlier works by Gerosa* and Di Lauro\cite{fdila-bs-otto}.
-%% todo dilauro -> ???
+\todo{dilauro -> ???}
 
 \subsection{Issues}
 
-The problem we encountered with ROS is its complexity: while it's a easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply modifying the source code extensively, which is a very complex task. The authors of the software have acknowledged those problems and set out to release a newer, real-time friendly version of the platform\cite{ros2-realtime-intro}.
-
-Moreover, the presence of a Master node and an inter-node communication protocol based on handshaking (much akin to how MTTQ operates) makes it difficult to precisely control timing, unless the whole node setup is performed offline.
+The problem we encountered with ROS is its complexity: while it's a easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply modifying the source code extensively, which is a very complex task.  Moreover, the presence of a Master node and an inter-node communication protocol based on handshaking (much akin to how MTTQ operates)\todo{cite?} makes it difficult to precisely control timing, unless the whole node setup is performed offline.
 
 The real problem, however, comes from the fact that many any parts of ROS are written in Python, which is an interpreted (or rather JIT-compiled) language. This class of languages are notoriously hard to control in real-time environments, because they are not designed with real-time constraints in mind and employ facilities like non-deterministic garbage collection and dynamic allocation that could be avoided entirely by using a compiled language such as C. Explaining how the Python garbage collector works is beyond the scope of this report, but a cursory introduction is provided by the Python Developer's Guide\cite{python-devguide-gc}.
+
+An attempt to solve this problem has been made by \todo{cite RT-ROS chinese}, but we've deemed it as an unnecessarily complex workaround and decided to explore different solutions.
 
 \section{Possible Solutions}
 
@@ -118,7 +109,7 @@ To achieve precise real-time control of our application we decided to explore th
 \subsection{\texttt{PREEMPT\_RT}}
 
 %% brief history of p-rt: who's behind it?
-\texttt{PREEMPT\_RT} is a patch for the Linux kernel introduced in 2005 with the goal of reducing the latency and increasing the determinism of the kernel. The patch was not immediately recognized by the Linux kernel developers, but it's slowly gained traction and it's hopefully going to be merged into mainline soon.\cite{lwn-rt-future}
+\texttt{PREEMPT\_RT} is a patch for the Linux kernel introduced in 2005 with the goal of reducing the latency and increasing the determinism of the kernel. The patch was not immediately recognized by the Linux kernel developers, but it's slowly gained traction and it's hopefully going to be merged into mainline soon\cite{lwn-rt-future}.
 
 %% how does preempt-rt work?
 Over the course of the last 16 years, many features that help the kernel behave in a more real-time way have trickled down from the RT patch to the mainline. Some notable examples are:
@@ -127,22 +118,22 @@ Over the course of the last 16 years, many features that help the kernel behave 
 \begin{itemize}
     \item The removal of spinlocks
     \item The introduction of Threaded Interrupt Handlers
+    \item ?\todo{more?}
 \end{itemize}
 
-A proper analysis of the Real-Time patch has been performed by Rezenghani et al.\cite{survey-preempt-rt}.
+While those features are currently available in mainline, to fully appreciate their benefits the kernel must still be patched, reconfigured and rebuilt from source: this is because some improvements and most configuration options are still only available through the patch. A proper analysis of the Real-Time kernel improvements and of the parts that are still only available through the patch has been performed by \textcite{survey-preempt-rt}.
 
 %% how can we determine the benefits of preempt-rt?
-The benefits of \texttt{PREEMPT\_RT}  are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are notable *%% todo: cite
+The benefits of \texttt{PREEMPT\_RT}  are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are notable\cite{dmoceri-benchmarking-rtlinux}.\todo{Expand upon the topic}
 
 It's important to note that, while \texttt{PREEMPT\_RT} has some competition in the real-time Linux market, it's the only solution that does not involve a co-kernel approach: this ensures that any program written and compiled for mainline Linux will run unmodified on a kernel patched with \texttt{PREEMPT\_RT}, while benefiting from the various improvements brought on by the patch. 
 
 \subsection{ROS2}
 
-%% TODO check ros2 toy and release
-ROS version 2 is the new generation of the ROS platform, which at the time of writing has been undergoing development since 20xx and is now at release x.
+ROS version 2 is the new generation of the ROS platform, which at the time of writing has been undergoing development since 20xx and is now at release x.\todo{check ros2 toy and release}
 
 %% what are the benefits of using ros2?
-ROS2 has been designed with real time constraints in mind to solve the shortcomings of ROS, as it pipelines tasks in a very different way and uses an enterprise-grade communications subsystem that is much more RT-friendly. ROS2 uses a single process to control and schedule tasks, spawning them as threads.
+ROS2 has been designed with real time constraints in mind to solve the shortcomings of ROS\cite{ros2-realtime-intro}, as it pipelines tasks in a very different way and uses an enterprise-grade communications subsystem that is much more RT-friendly. ROS2 uses a single process to control and schedule tasks, spawning them as threads.
 
 %% why would keeping ros be important?
 Keeping ROS would've enabled us to benefit from real-time improvements without the burden of porting the whole application stack to a new platform, thus reducing turnaround time significantly. 
@@ -161,11 +152,10 @@ SCHED\_EDF is a scheduler developed by <! inserire nomi qui> that's been availab
     \item A runtime, that is the WCET of the task
 \end{itemize}
 
-The CBS algorithm is used in conjunction with EDF for...
-\todo{Dig up details about CBS}
+The CBS algorithm is used in conjunction with EDF for...\todo{Dig up details about CBS}
 
 %% how does sched-edf work
-The algorithms behind SCHED\_EDF are described by *<abeni, buttazzo>.
+The algorithms behind SCHED\_EDF are described by.\todo{citetext  *<abeni, buttazzo> }
 
 %% sposta in edf
 \subsubsection{Scheduling classes in Linux}
@@ -189,17 +179,19 @@ Written from scratch, the demo currently leverages several APIs provided by Linu
 
 \section{Design}
 
-\texttt{rt-app}'s design is based around some components which are regarded as 
-standard in the mobile robotics field, such as:
+%\includegraphics[]{img/overview.svg} %svg->png
+
+\texttt{rt-app}'s design is based around some components which are regarded as standard in the mobile robotics field, such as:
 \begin{itemize}
-  \item The local planner: a component responsible for tracking
-  \item The costmap:
-  \item odometry: a component that constantly elaborates the data received from various sources, such as the move base's wheel encoders, to keep track of where the robot is going.
+    \item The odometry, which constantly elaborates the data received from various sources, such as the mobile platform's wheel encoders, to keep track of where the robot is going.
+    \item The costmap, which is responsible for determining how likely the robot is to collide with an obstacle, using a predefined map and integrating data from other sources.
+    \item The local planner, which drives the robot towards a goal using the data provided by the odometry and various other sources, such as AMCL.
+    \item AMCL, which\todo{...}
 \end{itemize}
 
 Moreover, the following components have been envisioned:
 \begin{itemize}
-  \item The pose manager, which is a pivotal component that manages the lifecycle of a pose, its duty is to control the flow of poses going from odometry to the local planner and backfeed adjusted poses coming from AMCL.
+  \item The pose manager, which is a pivotal component that manages the lifecycle of a pose, its duty is to control the flow of poses going towards and from the other modules.
   \item The dispatcher, which takes care of initializing threads and resources, and is responsible for terminating the application once all workers have finished their job.
 \end{itemize}
 
@@ -287,10 +279,13 @@ http://kernel-notes.gbittencourt.net/compiling-preempt-rt/
 
 \section{Emulating the mobile platform}
 
-Simulating IRAlab's Otto mobile platform's comms stack with an ESP8266 (NodeMCU "amica" 1.0) and
-providing dummy data to \href{https://github.com/iralabdisco/rt-app}{rt-app}'s odometry module for testing. Using nanopb for comms over a serial line over USB (UART) running at 115200 baud. 
+Due to logistics issues caused by the CoVID-19 pandemic, the IRAlab team has not been able to deploy the Otto mobile platform for several months: this posed a serious problem, since we could not use it for developing the \texttt{a\_otto} adapter.
 
-\todo{Describe otto266 better}
+To work around this problem, we've set out to simulate Otto's communication stack by using an ESP8266 (NodeMCU "amica" 1.0) and providing dummy data to the demo's odometry module for testing. 
+
+This eventually caused a deluge of problems, since the two platforms behave in slightly different ways and it caused us a serious setback.
+
+\todo{Describe otto266 better OR delete this section entirely, incorporating it somewhere else}
 
 \section{Processor features that are detrimental to RT performance}
 
@@ -319,7 +314,3 @@ CPUSETS solve the problem of SMP (and SMT, to some extent) by locking specific p
 % Tail
 \printbibliography
 \end{document}
-
-
-
-
