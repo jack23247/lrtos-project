@@ -44,8 +44,8 @@
 \begin{flushright}
   \itshape
   \begin{tabular}{@{}l@{}}
-    In Fulvio Testi 175 we trust. \\
-    MP,MS,MT,AM,MC 2017-2020
+    In (conflicted) memory of Fulvio Testi 174.\\
+    2017-2020\\ JM,MP,MS,MT,AM,MC 
   \end{tabular}
 \end{flushright}
 \vspace{\stretch{2}}
@@ -85,7 +85,9 @@ These, along with the fact that IRAlab has been running Linux on control systems
 
 \section{Current Implementation}
 
-At the moment, most of IRAlab's mobile platforms are controlled by a master node running Ubuntu Linux 16.04 LTS and the ROS framework, which was created by Willow Garage as a rapid development platform for their PR2 robot and traces its roots into an even earlier effort by a team of researchers and students at Stanford University. The name "Robot Operating System" is misleading: in fact, ROS is mostly an open-source middleware, that is a set of software libraries and tools that help you build robot applications, which actually needs an underlying operating system to run: currently, it may do so on both Unix-like operating systems such as Ubuntu GNU/Linux, BlackBerry QNX\cite{qnx-ros} and Apple macOS, and on some Microsoft Windows versions. For simplicity, throughout this report we'll use the term "ROS" to refer to the ROS+Linux combination.
+At the moment, most of IRAlab's mobile platforms are controlled by a master node running Ubuntu Linux 16.04 LTS and the ROS framework, which was created by Willow Garage as a rapid development platform for their PR2 robot and traces its roots into an even earlier effort by a team of researchers and students at Stanford University. 
+
+The name "Robot Operating System" is misleading: in fact, ROS is mostly an open-source middleware, that is a set of software libraries and tools that help you build robot applications, which actually needs an underlying operating system to run: currently, it may do so on both Unix-like operating systems such as Ubuntu GNU/Linux, BlackBerry QNX\cite{qnx-ros} and Apple macOS, and on some Microsoft Windows versions. For simplicity, throughout this report we'll use the term "ROS" to refer to the ROS+Linux combination.
 
 \subsection{Description}
 
@@ -106,7 +108,7 @@ An attempt to solve this problem has been made by \todo{cite RT-ROS chinese}, bu
 
 To achieve precise real-time control of our application we decided to explore the capabilities of the RT patch, which greatly reduces the latency of the Linux kernel, thus giving the programmer more control on the timing of a real-time application.
 
-\subsection{\texttt{PREEMPT\_RT}}
+\subsection{The \texttt{PREEMPT\_RT} kernel patch}
 
 %% brief history of p-rt: who's behind it?
 \texttt{PREEMPT\_RT} is a patch for the Linux kernel introduced in 2005 with the goal of reducing the latency and increasing the determinism of the kernel. The patch was not immediately recognized by the Linux kernel developers, but it's slowly gained traction and it's hopefully going to be merged into mainline soon\cite{lwn-rt-future}.
@@ -128,7 +130,9 @@ The benefits of \texttt{PREEMPT\_RT}  are invaluable: at the cost of throughput,
 
 It's important to note that, while \texttt{PREEMPT\_RT} has some competition in the real-time Linux market, it's the only solution that does not involve a co-kernel approach: this ensures that any program written and compiled for mainline Linux will run unmodified on a kernel patched with \texttt{PREEMPT\_RT}, while benefiting from the various improvements brought on by the patch. 
 
-\subsection{ROS2}
+\subsection{The choice of a framework}
+
+\subsubsection{The ROS2 middleware}
 
 ROS version 2 is the new generation of the ROS platform, which at the time of writing has been undergoing development since 20xx and is now at release x.\todo{check ros2 toy and release}
 
@@ -141,10 +145,10 @@ Keeping ROS would've enabled us to benefit from real-time improvements without t
 %% why did we rule out ros2 entirely?
 In the end, we decided that ROS2 would not give us precise enough control on RT constraints because since the tasks are scheduled by an algorithm internal to ros2*<ros2 internals>, it's impossible for us to schedule single tasks with an RT-scheduler provided by Linux such as RT or EDF. 
 
-\subsection{\texttt{SCHED\_EDF}}
+\subsubsection{An homebrew solution based on \texttt{SCHED\_DEADLINE}}
 
 %% brief history of sched-edf and who's behind it
-SCHED\_EDF is a scheduler developed by <! inserire nomi qui> that's been available since Kernel <!versione linux qui>. The EDF scheduler allows the programmer to define and schedule tasks in the highest possible scheduling class <vedi capitolo classi scheduling> with an Earlier Deadline First" algorithm. The programmer must define:
+SCHED\_DEADLINE is a scheduler developed by <! inserire nomi qui> that's been available since Kernel <!versione linux qui>. The EDF scheduler allows the programmer to define and schedule tasks in the highest possible scheduling class <vedi capitolo classi scheduling> with an Earlier Deadline First" algorithm. The programmer must define:
 
 \begin{itemize}
     \item A period, that is the time after which the task repeats itself (or rather the scheduler does)
@@ -158,8 +162,6 @@ The CBS algorithm is used in conjunction with EDF for...\todo{Dig up details abo
 The algorithms behind SCHED\_EDF are described by.\todo{citetext  *<abeni, buttazzo> }
 
 %% sposta in edf
-\subsubsection{Scheduling classes in Linux}
-
 Scheduling classes in Linux are a system to provide different scheduling algorithms for different kinds of tasks while maintaining a specific hierarchy 
 
 %% scheduling priority
@@ -176,6 +178,19 @@ Refer to *<sched(7)>.
 Our custom solution, named \texttt{rt-app}, is a demonstration of what we believe is a viable approach for building real-time control systems on Linux.
 
 Written from scratch, the demo currently leverages several APIs provided by Linux such as \texttt{sched}, \texttt{time} and \texttt{pthreads}.
+
+The main goal of \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU standard library: thus, in the following sections we'll focus more on the implementation rather than the design process.
+
+\section{Planning}
+
+Given that the work required to implement such a complex application can't be possibly condensed in such a short timeframe, we've settled for splitting the work in several phases:
+\begin{itemize}
+  \item Phase 1: High level design and survey of the possible solutions
+  \item Phase 2: Implementation of the dispatcher, at least one of the modules and integration with an existing mobile platform.
+  \item Phase 3: Maintenance and gradual addition of more modules, according to the programming guidelines and general architecture set by the work performed in phase 2.
+\end{itemize}
+
+Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto\cite{fdila-bs-otto} mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a the microcontroller that is responsible for driving Otto's motors and encoders through the serial port.
 
 \section{Design}
 
@@ -196,21 +211,6 @@ Moreover, the following components have been envisioned:
 \end{itemize}
 
 Most of these operations are to be performed on-line, that is in a real-time fashion, except for global planning and thread dispatching, both of which happen once, when the dispatcher sets the modules up.
-
-\subsection{Rationale}
-
-The main goal behind \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU standard library: thus, in the following sections we'll focus more on the implementation rather than the design process.
-
-\subsection{Planning}
-
-Given that the work required to implement such a complex application can't be possibly condensed in such a short timeframe, we've settled for splitting the work in several phases:
-\begin{itemize}
-  \item Phase 1: High level design and survey of the possible solutions
-  \item Phase 2: Implementation of the dispatcher, at least one of the modules and integration with an existing mobile platform.
-  \item Phase 3: Maintenance and gradual addition of more modules, according to the programming guidelines and general architecture set by the work performed in phase 2.
-\end{itemize}
-
-Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto\cite{fdila-bs-otto} mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a the microcontroller that is responsible for driving Otto's motors and encoders through the serial port.
 
 \section{Implementation}
 
@@ -241,6 +241,10 @@ Conveniently, the Linux kernel works around this problem for us: to accurately a
 
 Besides keeping a time base and calculating deltas, the \texttt{h\_time} helper mostly performs conversions: since the standard library uses \texttt{timespec} structures to pass values around, \texttt{h\_time} is also responsible for translating \texttt{timespec}s to nanoseconds where needed.  
 
+\subsection{Logging}
+
+Logging was implemented with syslog() and it's got better performance than printf() logging, besides it can make use of system logs and be easily trackable with tools like journalctl. Refer to *<article that says that printf is worse than syslog>\todo{cite}
+
 \subsection{Communications}
 
 As we stated earlier, the \textit{adapters} provide a clean way to interact with various peripherals.
@@ -251,7 +255,7 @@ Currently, the demo application issues command to the Otto mobile platform via a
 
 \subsection{Shared memory}
 
-Not implemented.
+Not implemented.\todo{remove or what?}
 
 \section{Future Development}
 
@@ -263,7 +267,7 @@ Not implemented.
 
 \newpage
 % Ch3
-\chapter{Implementation Issues <???>}
+\chapter{Implementation Issues}\todo{uhhh what}
 \section{Patching and building the kernel}
 
 http://kernel-notes.gbittencourt.net/compiling-preempt-rt/
@@ -297,18 +301,16 @@ This eventually caused a deluge of problems, since the two platforms behave in s
     \item Power saving states, suspension, hybernation and clock boost
 \end{itemize}
 
-\section{Logging}
-
-Logging was implemented with syslog() and it's got better performance than printf() logging, besides it can make use of system logs and be easily trackable with tools like journalctl. Refer to *<article that says that printf is worse than syslog>
 
 \section{Filesystem}
 
-I'm not sure I'm keeping this section as it's pretty hard to find reputable sources, but it's a nice thing to do anyway. 
+\todo{I'm not sure I'm keeping this section as it's pretty hard to find reputable sources, but it's a nice thing to do anyway.}
 
 \section{Notes on CPUSETS} %% maybe it's better off here?
 
 CPUSETS solve the problem of SMP (and SMT, to some extent) by locking specific processes (as in thread groups) to a partition of the available processors (or cores).
 
+\todo{We have not explored cpusets after all. Remove?}
 \todo{Explain how CPUSETS work with a code example}
 
 % Tail
