@@ -98,37 +98,39 @@ An in-depth analysis of the ROS functionalities and usage in the context of our 
 
 \subsection{Issues}
 
-The problem we encountered with ROS is its complexity: while it's a easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply modifying the source code extensively, which is a very complex task.  Moreover, the presence of a Master node and an inter-node communication protocol based on handshaking (much akin to how MTTQ operates)\todo{cite?} makes it difficult to precisely control timing, unless the whole node setup is performed offline.
+The problem we encountered with ROS is its complexity: while it's a easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply heavily modifying the codebase, which is a very complex task. 
 
-The real problem, however, comes from the fact that many any parts of ROS are written in Python, which is an interpreted (or rather JIT-compiled) language. This class of languages are notoriously hard to control in real-time environments, because they are not designed with real-time constraints in mind and employ facilities like non-deterministic garbage collection and dynamic allocation that could be avoided entirely by using a compiled language such as C. Explaining how the Python garbage collector works is beyond the scope of this report, but a cursory introduction is provided by the Python Developer's Guide\cite{python-devguide-gc}.
+%%???
+Moreover, the presence of a Master node and an inter-node communication protocol based on handshaking (much akin to how MTTQ operates)\todo{cite?} makes it difficult to precisely control timing, unless the whole node setup is performed offline.
 
-An attempt to solve this problem has been made by \todo{cite RT-ROS chinese}, but we've deemed it as an unnecessarily complex workaround and decided to explore different solutions.
+Ultimately, some parts of ROS are written in Python\cite{roswiki-rospy}, which is an interpreted (or rather JIT-compiled) language: this class of languages are notoriously hard to control in real-time environments, because they are not designed with real-time constraints in mind and employ facilities like garbage collection and dynamic allocation that could be avoided entirely by using a compiled language such as C. Explaining how the Python garbage collector works is beyond the scope of this report, but a cursory introduction is provided by the Python Developer's Guide\cite{python-devguide-gc}.
+
+An attempt to solve this problem has been made by \textcite{rt-ros-approach}, but we've deemed it as an unnecessarily complex workaround and decided to explore different solutions.
 
 \section{Possible Solutions}
 
-To achieve precise real-time control of our application we decided to explore the capabilities of the RT patch, which greatly reduces the latency of the Linux kernel, thus giving the programmer more control on the timing of a real-time application.
+To achieve precise real-time control of our application we decided to explore the capabilities of the RT patch, which greatly reduces the latency of the Linux kernel, thus giving the programmer more control on the real-time constraints of each specific application.
 
 \subsection{The \texttt{PREEMPT\_RT} kernel patch}
 
-%% brief history of p-rt: who's behind it?
-\texttt{PREEMPT\_RT} is a patch for the Linux kernel introduced in 2005 with the goal of reducing the latency and increasing the determinism of the kernel. The patch was not immediately recognized by the Linux kernel developers, but it's slowly gained traction and it's hopefully going to be merged into mainline soon\cite{lwn-rt-future}.
+The \texttt{PREEMPT\_RT} patch was introduced in 2005 with the goal of reducing the latency and increasing the determinism of the Linux kernel. Since its introduction, the patch has slowly gained traction amongst the kernel developers' community and it's hopefully going to be merged into mainline soon\cite{lwn-rt-future}.
 
-%% how does preempt-rt work?
-Over the course of the last 16 years, many features that help the kernel behave in a more real-time way have trickled down from the RT patch to the mainline. Some notable examples are:
+The goal of the \texttt{PREEMPT\_RT} patch is not making the system faster, but rather to eliminate virtually all of the mechanisms that introduce unbounded latencies in kernel space. By doing this, the RT kernel is able to improve the consistency of the system calls significantly\cite{dmoceri-benchmarking-rtlinux}, albeit with a small performance hit.
+
+Nowadays, the impact of \texttt{PREEMPT\_RT} may not be immediately obvious, as many of its features have trickled down from the patch to the mainline kernels over the last 16 years. The most notable examples, from an academic standpoint, are:
 
 %% todo
 \begin{itemize}
-    \item The removal of spinlocks
-    \item The introduction of Threaded Interrupt Handlers
-    \item ?\todo{more?}
+    \item The \textit{priority inheritance} system, which attempts to solve the well-discussed problem of priority inversion.
+    \item The introduction of \textit{threaded interrupt handlers}, which are necessary to reduce unbounded latencies associated with non-deterministic peripherals such as HIDs.
+    \item The 
 \end{itemize}
 
-While those features are currently available in mainline, to fully appreciate their benefits the kernel must still be patched, reconfigured and rebuilt from source: this is because some improvements and most configuration options are still only available through the patch. A proper analysis of the Real-Time kernel improvements and of the parts that are still only available through the patch has been performed by \textcite{survey-preempt-rt}.
-
-%% how can we determine the benefits of preempt-rt?
-The benefits of \texttt{PREEMPT\_RT}  are invaluable: at the cost of throughput, unbounded latencies are virtually eliminated and the performance benefits are notable\cite{dmoceri-benchmarking-rtlinux}.\todo{Expand upon the topic}
+However, some of the improvements and most configuration options brought on by the patch haven't been merged with mainline yet: this is why the kernel must be patched, reconfigured, and rebuilt from source to fully appreciate its benefits. While this operation is not difficult, it can become very time-consuming, as a full kernel build on commodity hardware may take several hours.
 
 It's important to note that, while \texttt{PREEMPT\_RT} has some competition in the real-time Linux market, it's the only solution that does not involve a co-kernel approach: this ensures that any program written and compiled for mainline Linux will run unmodified on a kernel patched with \texttt{PREEMPT\_RT}, while benefiting from the various improvements brought on by the patch. 
+
+A through analysis of the topics we've briefly covered over this section has been performed by \textcite{survey-preempt-rt}, and it's been instrumental in aligning our expectations with the actual capabilities of a \texttt{PREEMPT\_RT} patched kernel.
 
 \subsection{The choice of a framework}
 
@@ -198,25 +200,28 @@ Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the O
 
 \texttt{rt-app}'s design is based around some components which are regarded as standard in the mobile robotics field, such as:
 \begin{itemize}
-    \item The odometry, which constantly elaborates the data received from various sources, such as the mobile platform's wheel encoders, to keep track of where the robot is going.
-    \item The costmap, which is responsible for determining how likely the robot is to collide with an obstacle, using a predefined map and integrating data from other sources.
-    \item The local planner, which drives the robot towards a goal using the data provided by the odometry and various other sources, such as AMCL.
-    \item AMCL, which\todo{...}
+    \item The \textit{pose}, which is the basic unit of data containing all of the information about the orientation and speed of the mobile platform, plus timestamping.
+    \item The \textit{odometry}, which constantly elaborates the data received from various sources, such as the mobile platform's wheel encoders, to keep track of where the robot is going.
+    \item The \textit{costmap}, which is responsible for determining how likely the robot is to collide with an obstacle, using a predefined map and integrating data from other sources.
+    \item The \textit{local planner}, which drives the robot towards a goal using the data provided by the odometry and various other sources, such as AMCL.
+    \item \textit{AMCL}, which is a collection of algorithms that use data coming from the sensors, such as a LiDAR, to greatly improve the quality of the localization\cite{roswiki-amcl}.
 \end{itemize}
 
 Moreover, the following components have been envisioned:
 \begin{itemize}
-  \item The pose manager, which is a pivotal component that manages the lifecycle of a pose, its duty is to control the flow of poses going towards and from the other modules.
-  \item The dispatcher, which takes care of initializing threads and resources, and is responsible for terminating the application once all workers have finished their job.
+  \item The \textit{pose manager}, which is a pivotal component that manages the lifecycle of a pose, its duty is to control the flow of data between the modules and to make sure that timestamping is consistent.
+  \item The \textit{dispatcher}, which takes care of initializing threads and resources, and is responsible for terminating the application once all workers have finished their job.
 \end{itemize}
 
 Most of these operations are to be performed on-line, that is in a real-time fashion, except for global planning and thread dispatching, both of which happen once, when the dispatcher sets the modules up.
 
 \section{Implementation}
 
+Due to the nature of this project, implementing the whole application would have been impossible: thus, we've decided to focus on a specific subset of functionalities.\todo{go on}
+
 \subsection{Components}
 
-Three distinct types of logic components have been devised:
+Three distinct types of software components have been devised:
 \begin{itemize}
     \item Modules: comprised of both a header and a source file, the modules contain the schedulable units of the application. Each module contains at least an entry point function, which will be executed when scheduling, and a number of other functions necessary to perform one or more specific tasks.   
     \item Helpers: headers that provide inline functions that wrap around system calls and kernel facilities in a standard way.
@@ -283,7 +288,7 @@ http://kernel-notes.gbittencourt.net/compiling-preempt-rt/
 
 \section{Emulating the mobile platform}
 
-Due to logistics issues caused by the CoVID-19 pandemic, the IRAlab team has not been able to deploy the Otto mobile platform for several months: this posed a serious problem, since we could not use it for developing the \texttt{a\_otto} adapter.
+Due to logistics issues caused by the COVID-19 pandemic, the IRAlab team has not been able to deploy the Otto mobile platform for several months: this posed a serious problem, since we could not use it for developing the \texttt{a\_otto} adapter.
 
 To work around this problem, we've set out to simulate Otto's communication stack by using an ESP8266 (NodeMCU "amica" 1.0) and providing dummy data to the demo's odometry module for testing. 
 

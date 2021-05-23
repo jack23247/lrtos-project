@@ -28,7 +28,8 @@
 }
 
 @article{survey-preempt-rt,
-	author     = {Reghenzani, Federico and Massari, Giuseppe and Fornaciari, William},
+	%author     = {Reghenzani, Federico and Massari, Giuseppe and Fornaciari, William},
+	author     = {Federico {Reghenzani} and Giuseppe {Massari} and William {Fornaciari}},
 	title      = {The Real-Time Linux Kernel: A Survey on PREEMPT\_RT},
 	year       = {2019},
 	issue_date = {February 2019},
@@ -128,4 +129,34 @@
 	year        = {2018},
     url         = {https://webthesis.biblio.polito.it/8505/1/tesi.pdf},
     keywords    = {linux,rt,benchmark}
+}
+
+@online{roswiki-rospy,
+	organization = {ROS.org},
+	title        = {rospy},
+	url          = {http://wiki.ros.org/rospy},
+	addendum     = "(accessed: 23/05/2021)",
+	keywords     = {ros,python}
+}
+
+@article{rt-ros-approach,
+    title = {RT-ROS: A real-time ROS architecture on multi-core processors},
+    journal = {Future Generation Computer Systems},
+    volume = {56},
+    pages = {171-178},
+    year = {2016},
+    issn = {0167-739X},
+    doi = {https://doi.org/10.1016/j.future.2015.05.008},
+    url = {https://www.sciencedirect.com/science/article/pii/S0167739X15001831},
+    author = {Hongxing Wei and Zhenzhou Shao and Zhen Huang and Renhai Chen and Yong Guan and Jindong Tan and Zili Shao},
+    keywords = {Real-time operating systems, Robot Operating Systems, Multi-core processors},
+    abstract = {ROS, an open-source robot operating system, is widely used and rapidly developed in the robotics community. However, running on Linux, ROS does not provide real-time guarantees, while real-time tasks are required in many robot applications such as robot motion control. This paper for the first time presents a real-time ROS architecture called RT-RTOS on multi-core processors. RT-ROS provides an integrated real-time/non-real-time task execution environment so real-time and non-real-time ROS nodes can be separately run on a real-time OS and Linux, respectively, with different processor cores. In such a way, real-time tasks can be supported by real-time ROS nodes on a real-time OS, while non-real-time ROS nodes on Linux can provide other functions of ROS. Furthermore, high performance is achieved by executing real-time ROS nodes and non-real-time ROS nodes on different processor cores. We have implemented RT-ROS on a dual-core processor and conducted various experiments with real robot applications. The experimental results show that RT-ROS can effectively provide real-time support for the ROS platform with high performance by exploring the multi-core architecture.}
+}
+
+@online{roswiki-amcl,
+	organization = {ROS.org},
+	title        = {amcl},
+	url          = {http://wiki.ros.org/amcl},
+	addendum     = "(accessed: 23/05/2021)",
+	keywords     = {ros,amcl,algorithm}
 }
