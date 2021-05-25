@@ -162,6 +162,7 @@ Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the O
     \item The \textit{costmap}, which is responsible for determining how likely the robot is to collide with an obstacle, using a predefined map and integrating data from other sources.
     \item The \textit{local planner}, which drives the robot towards a goal using the data provided by the odometry and various other sources, such as AMCL.
     \item \textit{AMCL}, which is a collection of algorithms that use data coming from the sensors, such as a LiDAR, to greatly improve the quality of the localization \cite{roswiki-amcl}.
+    \item The \textit{global planner}, which builds a global plan and the costmap from raw data before the real time processes are started.
 \end{itemize}
 
 Moreover, the following components have been envisioned:
@@ -252,15 +253,7 @@ Each module contains a schedulable unit, a portion of code that is capable of ru
 
 This architecture is flexible because it lets the programmer decide how a specific module will be scheduled by the system, and using which scheduler. When using \texttt{SCHED\_DEADLINE}, for example, the programmer can provide a \textit{deadline}, a \textit{runtime} and a \textit{period}: those parameters will be used to control when the thread will be selected for execution and after which amount of time it's expected to terminate (at worst) by the scheduler.
 
-To schedule a task with \texttt{DEADLINE}, the programmer must define a \texttt{sched\_attr} structure containing the following:
-
-\begin{itemize}
-    \item A period, that is the time after which the task repeats itself (or rather the scheduler does)
-    \item A deadline, that is the time after which the task has taken too long to complete
-    \item A runtime, that is the WCET of the task
-\end{itemize}
-
-\todo{polish}
+To change the scheduling parameters of a task, the programmer must define a \texttt{sched\_attr} structure containing some information such as what policy to use, how to react to certain events, and data specific to each policy such as a deadline.  
 
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/sched-attr.c}
@@ -272,6 +265,13 @@ The \texttt{SCHED\_FLAG\_DL\_OVERRUN} tells the scheduler that we want a \texttt
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/dl-miss-handler.c}
 \caption{Example of a deadline miss handler.}
+\end{listing}
+
+Lastly, the thread must perform a \texttt{sched\_setattr()} call to tell the scheduler that we want to use different scheduling parameters than the default ones: if the user running the program has the appropriate rights, and no errors occur, the call will be successful and the task be migrated by the kernel to \texttt{DEADLINE}'s ready queue for execution.
+
+\begin{listing}[H]
+\inputminted[frame=single,framesep=10pt]{c}{snippets/entry-point.c}
+\caption{Example of a periodic task scheduled with \texttt{SCHED\_DEADLINE}.}
 \end{listing}
 
 %https://lwn.net/Articles/743946/
