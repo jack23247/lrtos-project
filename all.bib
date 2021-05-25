@@ -101,7 +101,7 @@
 
 @online{man-clock-getres-2,
 	organization = {The Linux \textit{man-pages} project},
-	title        = {clock\_getres(2)},
+	title        = {\texttt{clock\_getres(2)}},
 	url          = {https://man7.org/linux/man-pages/man2/clock_gettime.2.html},
 	addendum     = "(accessed: 21/05/2021)",
 	keywords     = {linux,man,timers}
@@ -159,4 +159,110 @@
 	url          = {http://wiki.ros.org/amcl},
 	addendum     = "(accessed: 23/05/2021)",
 	keywords     = {ros,amcl,algorithm}
+}
+
+@inproceedings{demistifying-rt-latency,
+    author =	{Daniel Bristot de Oliveira and Daniel Casini and R{\^o}mulo Silva de Oliveira and Tommaso Cucinotta},
+    title =	{{Demystifying the Real-Time Linux Scheduling Latency}},
+    booktitle =	{32nd Euromicro Conference on Real-Time Systems (ECRTS 2020)},
+    pages =	{9:1--9:23},
+    series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+    ISBN =	{978-3-95977-152-8},
+    ISSN =	{1868-8969},
+    year =	{2020},
+    volume =	{165},
+    editor =	{Marcus V{\"o}lp},
+    publisher =	{Schloss Dagstuhl--Leibniz-Zentrum f{\"u}r Informatik},
+    address =	{Dagstuhl, Germany},
+    URL =		{https://drops.dagstuhl.de/opus/volltexte/2020/12372},
+    URN =		{urn:nbn:de:0030-drops-123721},
+    doi =		{10.4230/LIPIcs.ECRTS.2020.9},
+    annote =	{Keywords: Real-time operating systems, Linux kernel, PREEMPT_RT, Scheduling latency}
+}
+
+@online{man-sched-7,
+	organization = {The Linux \textit{man-pages} project},
+	title        = {\texttt{sched(7)}},
+	url          = {https://man7.org/linux/man-pages/man7/sched.7.html},
+	addendum     = "(accessed: 24/05/2021)",
+	keywords     = {linux,man,sched}
+}
+
+@online{man-time-7,
+	organization = {The Linux \textit{man-pages} project},
+	title        = {\texttt{time(7)}},
+	url          = {https://man7.org/linux/man-pages/man7/time.7.html},
+	addendum     = "(accessed: 24/05/2021)",
+	keywords     = {linux,man,timers}
+}
+
+@online{man-pthreads-7,
+	organization = {The Linux \textit{man-pages} project},
+	title        = {\texttt{pthreads(7)}},
+	url          = {https://man7.org/linux/man-pages/man7/pthreads.7.html},
+	addendum     = "(accessed: 24/05/2021)",
+	keywords     = {linux,man,threads}
+}
+
+@inproceedings{ros2-analysis,
+    author =	{Daniel Casini and Tobias Bla{\ss} and Ingo L{\"u}tkebohle and Bj{\"o}rn B. Brandenburg},
+    title =	{{Response-Time Analysis of ROS 2 Processing Chains Under Reservation-Based Scheduling}},
+    booktitle =	{31st Euromicro Conference on Real-Time Systems (ECRTS 2019)},
+    pages =	{6:1--6:23},
+    series =	{Leibniz International Proceedings in Informatics (LIPIcs)},
+    ISBN =	{978-3-95977-110-8},
+    ISSN =	{1868-8969},
+    year =	{2019},
+    volume =	{133},
+    editor =	{Sophie Quinton},
+    publisher =	{Schloss Dagstuhl--Leibniz-Zentrum fuer Informatik},
+    address =	{Dagstuhl, Germany},
+    URL =		{http://drops.dagstuhl.de/opus/volltexte/2019/10743},
+    URN =		{urn:nbn:de:0030-drops-107431},
+    doi =		{10.4230/LIPIcs.ECRTS.2019.6},
+    annote =	{Keywords: ROS, real-time systems, response-time analysis, robotics, resource reservation}
+}
+
+@online{lwn-cfs-merge,
+	author       = {Jonathan {Corbet}},
+	organization = {LWN.net},
+	title        = {CFS scheduler merged},
+	url          = {https://lwn.net/Articles/241085/},
+	addendum     = "(accessed: 25/05/2021)",
+	keywords     = {linux,scheduler,kernel}
+}
+
+@online{lwn-faggioli-mail,
+	author       = {Dario {Faggioli}},
+	organization = {LWN.net},
+	title        = {SCHED\_EDF scheduling class},
+	url          = {https://lwn.net/Articles/353797/},
+	addendum     = "(accessed: 25/05/2021)",
+	keywords     = {linux,scheduler,kernel}
+}
+
+@online{kn-linux-314,
+	organization = {kernelnewbies.org},
+	title        = {Linux 3.14},
+	url          = {https://kernelnewbies.org/Linux_3.14#head-651929cdcf19cc2e2cfc7feb16b78ef963d195fe},
+	addendum     = "(accessed: 25/05/2021)",
+	keywords     = {linux,scheduler,kernel}
+}
+
+@inproceedings{cbs-algorithm,
+    author = {Casini, Daniel and Abeni, Luca and Biondi, Alessandro and Cucinotta, Tommaso and Buttazzo, Giorgio},
+    title = {Constant Bandwidth Servers with Constrained Deadlines},
+    year = {2017},
+    isbn = {9781450352864},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    url = {https://doi.org/10.1145/3139258.3139285},
+    doi = {10.1145/3139258.3139285},
+    abstract = {The Hard Constant Bandwidth Server (H-CBS) is a reservation-based scheduling algorithm often used to mix hard and soft real-time tasks on the same system. A number of variants of the H-CBS algorithm have been proposed in the last years, but all of them have been conceived for implicit server deadlines (i.e., equal to the server period). However, recent promising results on semi-partitioned scheduling together with the demand for new functionality claimed by the Linux community, urge the need for a reservation algorithm that is able to work with constrained deadlines. This paper presents three novel H-CBS algorithms that support constrained deadlines. The three algorithms are formally analyzed, and their performance are compared through an extensive set of simulations.},
+    booktitle = {Proceedings of the 25th International Conference on Real-Time Networks and Systems},
+    pages = {68–77},
+    numpages = {10},
+    keywords = {real-time scheduling, resource reservations, temporal isolation},
+    location = {Grenoble, France},
+    series = {RTNS '17}
 }
