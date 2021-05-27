@@ -102,31 +102,30 @@ An in-depth analysis of the ROS functionalities and usage in the context of our 
 
 \subsection{Issues}
 
-The problem we encountered with ROS is its complexity: while it's a easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply heavily modifying the codebase, which is a very complex task. 
+The problem we encountered with ROS is its complexity: while it's easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply heavily modifying the codebase, which is a very complex task.
 
 %%???
 % Moreover, the presence of a Master node and an inter-node communication protocol based on handshaking (much akin to how MTTQ operates)\todo{cite?} makes it difficult to precisely control timing, unless the whole node setup is performed offline.
 
-Ultimately, some parts of ROS are written in Python \cite{roswiki-rospy}, which is an interpreted (or rather JIT-compiled) language: this class of languages are notoriously hard to control in real-time environments, because they are not designed with real-time constraints in mind and employ facilities like garbage collection and dynamic allocation that could be avoided entirely by using a compiled language such as C. Explaining how the Python garbage collector works is beyond the scope of this report, but a cursory introduction is provided by the Python Developer's Guide \cite{python-devguide-gc}.
+Ultimately, some parts of ROS are written in Python \cite{roswiki-rospy}, which is an interpreted (or rather JIT-compiled) language. Python is notoriously hard to control in a real-time environment since it uses facilities like garbage collection \cite{python-devguide-gc} and dynamic allocation that are not designed to obey real-time constraints. The easiest way to avoid this problem is to use a language such as C, which gives the programmer more control over the timing and scheduling of the threads.
 
 An attempt to solve this problem has been made by \textcite{rt-ros-approach}, but we've deemed it as an unnecessarily complex workaround and decided to explore different solutions.
 
 \section{A possible upgrade path}
 
-To efficiently develop a complex application, some kind of framework is necessary: this is why ROS has gained so much traction in the last decade. However, if said framework is too big and complex, you either leave it unmodified or get rid of it completely. For this reason, we were skeptical about the possibility to move our codebase to the ROS 2 framework, which would have been \todo{altro paragrafo orribile, va riscritto}
+To develop a complex application cost-effectively, using some scaffolding is necessary to avoid spending more time designing your software than implementing it: this is why the ROS framework, which doubles as a rapid prototyping platform, has gained so much traction in the last decade. 
+
+However, there are several common pitfalls associated with them: increasing modularity inevitably leads to more complex runtimes that must be bundled with your application and cannot be easily modified. While a modular design should address this problem, a fundamental design decision taken by the developers of the framework that clashes with the needs of your application would force you to move to a different platform entirely.
+
+It's impossible to know whether or not such a solution would be suitable for your application beforehand without doing some research: this is why we've decided to study the innards of the ROS 2 framework, which seemed like a viable upgrade path.
 
 \subsubsection{Robot Operating System, version 2}
 
-ROS version 2 is the new generation of the ROS platform, which at the time of writing has been undergoing development since 20xx and is now at release x.\todo{check ros2 toy and release}
+ROS version 2 is the new generation of the ROS platform which was launched in 2015, and has reached its seventh release. The designers of ROS 2 put more focus on the real-time needs of the robotics industry in an attempt to solve the shortcomings of ROS \cite{ros2-realtime-intro}, as it pipelines tasks in a very different way and uses an enterprise-grade communications subsystem that is much more RT-friendly \todo{cite}.
 
-%% what are the benefits of using ros2?
-ROS 2 has been designed with real time constraints in mind to solve the shortcomings of ROS \cite{ros2-realtime-intro}, as it pipelines tasks in a very different way and uses an enterprise-grade communications subsystem that is much more RT-friendly \todo{cite}. 
+Keeping the ROS framework would've enabled us to benefit from real-time improvements without the burden of porting our whole navigation stack to an entirely new platform, thus reducing turnaround time significantly.
 
-%% why would keeping ros be important?
-Keeping the ROS framework would've enabled us to benefit from real-time improvements without the burden of porting our whole navigation stack to a completely new platform, thus reducing turnaround time significantly: this would've benefited us in a number of ways, such as being able to focus more on the analysis of the real-time task at hand instead of developing a workable solution from scratch.
-
-%% why did we rule out ros2 entirely?
-After some research, we've determined that using ROS 2 would not let us control precisely how the tasks are scheduled, making it impossible to control the timing of a specific task with an RT-scheduler provided by Linux such as \texttt{RT} or \texttt{DEADLINE}. This limitation stems from the architecture of the task scheduler used in ROS 2: instead of spawning one thread for each task, the framework uses one or more "super-threads", inside of which a custom scheduling algorithm is executed. While this design should make the whole system behave in a more deterministic way compared to its predecessor, it's ultimately even more opaque to the underlying operating system (and to the programmer, for that matter) than the one employed by its predecessor.
+After some research, however, we've determined that using ROS 2 would not let us control the scheduling precisely enough, making it impossible to control the timing of a specific portion of code within a ROS 2 task with an RT-scheduler provided by Linux such as \texttt{RT} or \texttt{DEADLINE}. This limitation stems from the architecture of the scheduler used in ROS 2: instead of spawning one thread for each task, the framework uses one or more "super-threads", where a custom scheduling algorithm is in charge of scheduling a variable number of tasks. While this design should make the whole system behave in a more deterministic way compared to its predecessor, it's ultimately even more opaque to the underlying operating system (and to the programmer, for that matter) than the one that was used before.
 
 \newpage
 % Ch2
@@ -134,18 +133,18 @@ After some research, we've determined that using ROS 2 would not let us control 
 
 Our custom solution, named \texttt{rt-app}, is a demonstration of what we believe is a viable approach for building real-time control systems on Linux. Written from scratch, the demo currently leverages several APIs provided by Linux such as \texttt{sched(7)} \cite{man-sched-7}, \texttt{time(7)} \cite{man-time-7} and \texttt{pthreads(7)} \cite{man-pthreads-7}.
 
-The main goal of \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU standard library: thus, in the following sections we'll focus more on the implementation rather than on the design process.
+The main goal of \texttt{rt-app}, however, is demonstrating that replicating a ROS-like behavior is possible by only using facilities provided by the Linux kernel and the GNU standard library: thus, in the following sections, we'll focus more on the implementation rather than on the design process.
 
 \section{Planning}
 
-Given that the work required to implement such a complex application can't be possibly condensed in such a short timeframe, we've settled for splitting the work in several phases:
+Given that implementing a complex solution like this in such a short timeframe is impracticable, we've settled for splitting the work in several phases:
 \begin{itemize}
-  \item Phase 1: High level design and survey of the possible solutions
-  \item Phase 2: Implementation of the dispatcher, at least one of the modules and integration with an existing mobile platform.
+  \item Phase 1: High-level design and survey of the possible solutions
+  \item Phase 2: Implementation of the dispatcher, at least one of the modules, and integration with an existing mobile platform.
   \item Phase 3: Maintenance and gradual addition of more modules, according to the programming guidelines and general architecture set by the work performed in phase 2.
 \end{itemize}
 
-Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. IRAlab's Otto \cite{fdila-bs-otto} mobile platform has been selected to be the test candidate, thus the Odometry module has been interfaced with a the microcontroller that is responsible for driving Otto's motors and encoders through the serial port.
+Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the Odometry module has been implemented, on top of a simple dispatcher based on \texttt{pthreads} and \texttt{SCHED\_EDF}. We've selected IRAlab's Otto \cite{fdila-bs-otto} mobile platform as a test candidate because of its convenient size and ease of maintenance, and we've developed an adapter to interface the Odometry module with the STM32 microcontroller responsible for driving Otto's motors and encoders through the serial port.
 
 \section{Design}
 
@@ -155,31 +154,31 @@ Thus far, Phase 1 and a consistent portion of Phase 2 have been completed: the O
     \caption{High-level overview of the design proposal for our application framework}
 \end{figure}
 
-\texttt{rt-app}'s design is based around some components which are regarded as standard in the mobile robotics field, such as:
+\texttt{rt-app}'s design is based around some components considered a standard in the mobile robotics field, such as:
 \begin{itemize}
     \item The \textit{pose}, which is the basic unit of data containing all of the information about the orientation and speed of the mobile platform, plus timestamping.
     \item The \textit{odometry}, which constantly elaborates the data received from various sources, such as the mobile platform's wheel encoders, to keep track of where the robot is going.
     \item The \textit{costmap}, which is responsible for determining how likely the robot is to collide with an obstacle, using a predefined map and integrating data from other sources.
     \item The \textit{local planner}, which drives the robot towards a goal using the data provided by the odometry and various other sources, such as AMCL.
     \item \textit{AMCL}, which is a collection of algorithms that use data coming from the sensors, such as a LiDAR, to greatly improve the quality of the localization \cite{roswiki-amcl}.
-    \item The \textit{global planner}, which builds a global plan and the costmap from raw data before the real time processes are started.
+    \item The \textit{global planner}, which builds a global plan and the costmap from raw data on startup.
 \end{itemize}
 
-Moreover, the following components have been envisioned:
+Moreover, we've envisioned the following components:
 \begin{itemize}
-  \item The \textit{pose manager}, which is a pivotal component that manages the lifecycle of a pose, its duty is to control the flow of data between the modules and to make sure that timestamping is consistent.
-  \item The \textit{dispatcher}, which takes care of initializing threads and resources, and is responsible for terminating the application once all workers have finished their job.
+  \item The \textit{pose manager}, which is a pivotal component that manages the lifecycle of a pose, controls the flow of data between the modules, and makes sure that timestamping is consistent.
+  \item The \textit{dispatcher}, which takes care of initializing threads and setting up shared memory, and is responsible for terminating the application once all workers have finished their job.
 \end{itemize}
 
-Most of these operations are to be performed on-line, that is in a real-time fashion, except for global planning and thread dispatching, both of which happen once, when the dispatcher sets the modules up.
+Most of these are considered on-line operations, as they operate in a real-time environment, except for global planning and thread dispatching, both of which happen once when the execution starts.
 
 \subsection{Kernel}
 
 An integral part of our design revolves around exploiting the capabilities of a real-time operating system: in the Linux world, this can be accomplished through co-kernel solutions, like Xenomai or RTAI, or via the \texttt{PREEMPT\_RT} patch.
 
-The \texttt{PREEMPT\_RT} patch was introduced in 2005 with the goal of reducing the latency and increasing the determinism of the Linux kernel. Since its introduction, the patch has slowly gained traction amongst the kernel developers' community and it's hopefully going to be merged into mainline soon \cite{lwn-rt-future}. Given that the co-kernel approach requires an application to use custom APIs, we've chosen to patch our kernel: this ensures that any program written and compiled on off-the-shelf Linux distributions will run unmodified on a patched kernel, and benefit from it.
+The \texttt{PREEMPT\_RT} patch was introduced in 2005 to reduce the latency and increase the determinism of the Linux kernel. Since its inception, it has slowly gained traction amongst the kernel developers' community, and it's hopefully going to be merged into mainline soon \cite{lwn-rt-future}. Given that the co-kernel approach requires an application to use custom APIs, we've chosen to patch our kernel: this ensures that any program written and compiled on off-the-shelf Linux distributions will run unmodified on a patched kernel and benefit from it.
 
-The goal of the patch is not making the system faster, but rather to eliminate virtually all of the mechanisms that introduce unbounded latencies in kernel space. By doing this, the RT kernel is able to improve the consistency of the system calls significantly \cite{dmoceri-benchmarking-rtlinux}, albeit with a small performance hit. A formal model of the Linux kernel latencies, and a tool to analyze them have been developed by \textcite{demistifying-rt-latency}.
+The goal of the patch is not to make the system faster but rather to eliminate virtually all of the mechanisms that introduce unbounded latencies in kernel space. By doing this, the RT kernel can improve the consistency of the system calls significantly \cite{dmoceri-benchmarking-rtlinux}, albeit with a moderate performance hit. A formal model of the Linux kernel latencies and a tool to analyze them have been developed by \textcite{demistifying-rt-latency}.
 
 Nowadays, the impact of \texttt{PREEMPT\_RT} may not be immediately obvious, as many of its features have trickled down from the patch to the mainline kernels over the last 16 years. The most notable examples, from an academic standpoint, are:
 
@@ -189,9 +188,9 @@ Nowadays, the impact of \texttt{PREEMPT\_RT} may not be immediately obvious, as 
     %\item The 
 \end{itemize}
 
-However, some of the improvements and most configuration options brought on by the patch haven't been merged with mainline yet: this is why the kernel must be patched, reconfigured, and rebuilt from source to fully appreciate its benefits. While this operation is not difficult, it can become very time-consuming, as a full kernel build on commodity hardware may take several hours.
+However, a small portion of the improvements and most configuration options offered by the patch still elude the mainline: this is why to appreciate its benefits, the kernel must be patched, reconfigured, and rebuilt from source. While this operation is straightforward, it can become very time-consuming, as fully rebuilding a kernel on commodity hardware may take several hours.
 
-A through analysis of the topics we've briefly covered over this section has been performed by \textcite{survey-preempt-rt}, and it's been instrumental in aligning our expectations with the actual capabilities of a \texttt{PREEMPT\_RT} patched kernel.
+A thorough analysis of the topics we've briefly covered over this section has been performed by \textcite{survey-preempt-rt}, and it's been instrumental in aligning our expectations with the actual capabilities of a \texttt{PREEMPT\_RT} patched kernel.
 
 \subsection{Scheduler}
 
@@ -203,7 +202,7 @@ The other fundamental part of a real-time system is the scheduler: since kernel 
     \caption{The relationship between the scheduling classes provided by the Linux kernel}
 \end{figure}
 
-In each priority class, there may be a number of different \textit{scheduling policies} that a programmer or a system administrator might choose for a specific workload. In brief: 
+In each priority class, there may be several different \textit{scheduling policies} that a programmer or a system administrator might choose for a specific workload. In brief: 
 
 \begin{itemize}
     \item \texttt{STOP}: This is the highest priority class, and it's used in kernel space to pin portions of code on specific cores in an SMP setting.
@@ -220,29 +219,29 @@ For a more detailed description of the scheduling classes, refer to \texttt{sche
 %% brief history of sched-edf and who's behind it
 \texttt{DEADLINE} is a scheduler developed by Dario Faggioli et al. \cite{lwn-faggioli-mail} that's been available in Linux since kernel 3.14 \cite{kn-linux-314}. This scheduler allows the programmer to define and schedule tasks using an Earliest Deadline First (EDF) algorithm, combined with a mechanism called Constant Bandwidth Server (CBS) to perform resource reservation \cite{cbs-algorithm}.
 
-From a programming standpoint, \texttt{SCHED\_DEADLINE} exposes a rich interface to the scheduler that can be used to finely tune the behavior and constraints of a real-time task. The most fundamental parameters that we can tune are: 
+From a programming standpoint, \texttt{SCHED\_DEADLINE} exposes a rich interface to the scheduler that a developer can use to tune the behavior and constraints of a real-time task. The most fundamental parameters that we can tune are: 
 
 \begin{itemize}
     \item The \textit{period}, or the interval at which the scheduler will allow the task to run again after it yielded.
-    \item The \textit{deadline}, or the time after which the task has taken too long to complete and the application must take action.
-    \item The \textit{runtime}, or the task's expected worst case execution time.
+    \item The \textit{deadline}, or the time after which the task has taken too long to complete, and the application must take action.
+    \item The \textit{runtime}, or the task's expected worst-case execution time.
 \end{itemize}
 
-The EDF algorithm is well known in literature for its reliability and ability to fully utilize the system's computational resources, making it ideal for our demo's purposes.
+The EDF algorithm is known in the literature for its reliability and ability to fully utilize the system's computational resources, making it ideal for our demo's purposes.
 
 \section{Implementation}
 
-Due to the nature and time constraints of this project, implementing the whole application would have been impossible: thus, we've decided to focus on a specific subset of functionalities that are fundamental for a robot to be able to move and avoid obstacles. 
+Due to the nature and the time constraints of this project, implementing the whole application would have been impossible: thus, we've decided to focus on a specific subset of functionalities fundamental for a robot that needs to move and avoid obstacles autonomously. 
 
-More emphasis was put on the fundamental research needed to steer the project in the right direction, and on the real time (threading, timing and scheduling) portions of the framework than on the actual payload: as such, the accuracy of the navigation algorithms is not exactly top-notch, but this was expected.
+Throughout the development of the demo, we've given more attention to the fundamental research needed to steer the project in the right direction and on the real-time aspects of the framework than on the actual payload: as such, the accuracy of the navigation algorithms is not exactly top-notch.
 
 \subsection{Components}
 
-From a software engineering standpoint, three distinct kinds of components have been devised:
+From a software engineering standpoint, there are three distinct kinds of components:
 \begin{itemize}
-    \item Modules: comprised of both a header and a source file, the modules contain the schedulable units of the application. Each module contains at least an entry point function, which will be executed when scheduling, and a number of other functions necessary to perform one or more specific tasks.   
+    \item Modules: a header and a source file that contain the schedulable units of the application. Each module contains at least an entry point function executed upon scheduling and some other functions necessary to perform specific tasks.   
     \item Helpers: headers that provide inline functions that wrap around system calls and kernel facilities in a standard way.
-    \item Adapters: portions of code that provide an high-level interface to an hardware platform like Otto.
+    \item Adapters: portions of code that provide a high-level interface to a hardware platform like Otto.
 \end{itemize}
 
 The only exceptions to this rule are the \texttt{main.c} file, which provides a scheduling facility, and the \texttt{config.h} file, which contains preprocessor definitions used to change the behavior of the application for debugging purposes.
@@ -250,26 +249,25 @@ The only exceptions to this rule are the \texttt{main.c} file, which provides a 
 A permanent link to the current version (as of June 2021) of \texttt{rt-app}'s codebase is available at\todo{link github repo}: the code and the documentation automatically generated by Doxygen at compile time are considered complementary to this report.
 
 \subsection{Threads and scheduling}
+Each module contains a schedulable unit, a portion of code that is capable of running in a separate thread, and several scheduling parameters for a \texttt{sched\_setattr()} call to modify the scheduling attributes of the associated thread.
 
-Each module contains a schedulable unit, a portion of code that is capable of running in a separate thread, and a number of scheduling parameters that will be passed to a \texttt{sched\_setattr()} call to modify the scheduling attributes of the module's thread.
+This flexible architecture lets the programmer control how the system will schedule a specific module and by using which algorithm. When using \texttt{SCHED\_DEADLINE}, for example, the programmer can provide a \textit{deadline}, a \textit{runtime} and a \textit{period}: the scheduler will use those parameters to execute the thread appropriately and to know after which amount of time, at worst, it should yield.
 
-This architecture is flexible because it lets the programmer decide how a specific module will be scheduled by the system, and using which scheduler. When using \texttt{SCHED\_DEADLINE}, for example, the programmer can provide a \textit{deadline}, a \textit{runtime} and a \textit{period}: those parameters will be used to control when the thread will be selected for execution and after which amount of time it's expected to terminate (at worst) by the scheduler.
-
-To change the scheduling parameters of a task, the programmer must define a \texttt{sched\_attr} structure containing some information such as what policy to use, how to react to certain events, and data specific to each policy such as a deadline.  
+To change those parameters, the programmer must define a \texttt{sched\_attr} structure containing some information such as what policy to use, how to react to certain events, and parameters specific to each algorithm, such as a deadline.
 
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/sched-attr.c}
 \caption{Example of the \texttt{sched\_attr} structure for a task with a deadline of 11ms, and a period of 20ms.}
 \end{listing}
 
-The \texttt{SCHED\_FLAG\_DL\_OVERRUN} tells the scheduler that we want a \texttt{SIGXCPU} signal to be generated when a deadline is missed: this is useful because we can define a recovery behavior and extend or override the default handler.
+The \texttt{SCHED\_FLAG\_DL\_OVERRUN} tells the scheduler that we want it to generate a \texttt{SIGXCPU} signal when it detects a deadline miss: this is useful because we can define a recovery behavior that extends or overrides the default one.
 
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/dl-miss-handler.c}
 \caption{Example of a deadline miss handler.}
 \end{listing}
 
-Lastly, the thread must perform a \texttt{sched\_setattr()} call to tell the scheduler that we want to use different scheduling parameters than the default ones: if the user running the program has the appropriate rights, and no errors occur, the call will be successful and the task be migrated by the kernel to \texttt{DEADLINE}'s ready queue for execution.
+Lastly, the thread must perform a \texttt{sched\_setattr()} call to tell the scheduler that we want to use different scheduling parameters than the default ones: if the user running the program has the appropriate rights and no errors occur, the kernel will migrate the task to \texttt{DEADLINE}'s ready queue for execution.
 
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/entry-point.c}
@@ -280,13 +278,13 @@ Lastly, the thread must perform a \texttt{sched\_setattr()} call to tell the sch
 
 \subsection{Timing}
 
-As usual with systems interacting with hardware sensors, timing is a critical part of our demonstration: a simple timing system, wrapping the \texttt{clock\_*()} family of system calls, has been implemented to readily provide information such as global time deltas in nanoseconds that can be used to consistently timestamp information coming from the adapters. This collection of inline functions and globals is an helper, and resides into the \texttt{h\_time.h} header. 
+As usual with systems interacting with hardware sensors, timing is a critical part of our demonstration: a simple timing system, wrapping the \texttt{clock\_*()} family of system calls, has been implemented to readily provide information such as global time deltas in nanoseconds that are useful for timestamping information coming from the adapters. This collection of inline functions and globals is a helper and resides in the \texttt{h\_time.h} header. 
 
-To keep track of the time, the x86\_64 (AMD64) architecture provides access to a series of hardware clocks via the \texttt{RDTSC} and \texttt{RDTSCP} instructions. These instructions allow the kernel to query the \texttt{TSC} (Time Stamp Counter) internal register to provide us with a reliable hardware time source. However, the \texttt{TSC} register was introduced with the Pentium architecture and with the advent of technologies like out-of-order execution, hybernation, and multi-core processing it is not advisable to rely on it anymore. This problem, and a number of possible solutions, have been discussed both in official documentation \cite{intel-rdtsc-bench} and articles from notable sources \cite{ms-rdtsc-issues}.
+The x86\_64 (AMD64) architecture provides access to a series of hardware clocks via the \texttt{RDTSC} and \texttt{RDTSCP} instructions, which the operating system can use to keep track of the time. These instructions allow the kernel to query the \texttt{TSC} (Time Stamp Counter) internal register to provide us with a reliable hardware time source. However, Intel introduced the \texttt{TSC} register back in the days of the Pentium architecture, and with the advent of technologies like out-of-order execution, hibernation, and multi-core processing, it is not advisable to solely rely on it anymore. This problem, and several possible solutions, have been discussed both in official documentation \cite{intel-rdtsc-bench} and articles from notable sources \cite{ms-rdtsc-issues}.
 
-Conveniently, the Linux kernel works around this problem for us: to accurately advance its internal timers the kernel uses several clock sources and an unit of measurement called \textit{jiffy}, which is tied to the value of \texttt{HZ} and is fine-tuned to each architecture's needs \cite{elinux-hrts}. Thanks to this complex architecture, which is described in depth by the manual pages \cite{man-clock-getres-2}, we can trust the values provided by system calls such as \texttt{clock\_gettime()} because they're consistent enough to provide us usable values in the tens of nanoseconds range.
+Conveniently, the Linux kernel works around this problem for us: to accurately advance its internal timers, the kernel uses several clock sources and a unit of measurement called \textit{jiffy}, which is tied to the value of \texttt{HZ} and is fine-tuned to each architecture's needs \cite{elinux-hrts}. Thanks to this complex architecture, which is described in depth by the manual pages \cite{man-clock-getres-2}, we can trust the values provided by system calls such as \texttt{clock\_gettime()} because they're consistent enough to give us usable values in the tens of nanoseconds range.
 
-Besides keeping a time base and calculating deltas, the \texttt{h\_time} helper mostly performs conversions: since the standard library uses \texttt{timespec} structures to pass values around, \texttt{h\_time} is also responsible for translating \texttt{timespec}s to nanoseconds where needed.  
+Besides keeping a time base and calculating deltas, the \texttt{h\_time} helper mostly performs conversions: since the standard library uses \texttt{timespec} structures to pass values around, \texttt{h\_time} is also responsible for translating \texttt{timespec}s to nanoseconds where needed.
 
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/time.c}
@@ -295,21 +293,20 @@ Besides keeping a time base and calculating deltas, the \texttt{h\_time} helper 
 
 \subsubsection{Performance and average latency}
 
-To measure the performance of our timing system, a small test suite has been developed: exploiting the same design we've used for the Odometry module, a thread performing 100 die rolls is scheduled with a period of 20ms and a deadline of 11ms. At first, the die rolls were simulated with \texttt{RDRAND}, which takes a fair amount of clock cycles, but the lack of said instruction on Intel® Core™ processors based on the Sandy Bridge (2nd gen) architecture forced us to go back to a more traditional, but less intensive, \texttt{srand()}/\texttt{rand()} approach.
+To measure the performance of our timing system, we've developed a small test suite: exploiting the same design used for the Odometry module, a thread performing 100 die rolls is scheduled with a period of 20ms and a deadline of 11ms. At first, we used \texttt{RDRAND}, which takes a fair amount of clock cycles,  to simulate the die rolls, but the lack of said instruction on Intel® Core™ processors based on the Sandy Bridge (2nd gen) architecture forced us to go back to a more traditional, but less intensive, \texttt{srand()}/\texttt{rand()} approach.
 
-Before each die-rolling cycle, the \texttt{CLOCK\_MONOTONIC} timer is queried with the method described above: this gives us a fair idea of how much skew there is between the expected 20ms interval between each iteration, and the time it actually took the kernel to run our code.
+Before each die-rolling cycle, the \texttt{CLOCK\_MONOTONIC} timer is queried with the method described above: this gives us a fair idea of how much skew there is between the expected 20ms interval between each iteration and the time it took the kernel to run our code.
 
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/latency-test.c}
 \caption{By running this payload with a specific scheduler, useful data about the average jitter in different conditions can be gathered.}
 \end{listing}
 
-
 \todo{present the results (aka perform more tests before 31/05!)}
 
 \subsection{Logging}
 
-The problem of logging arose while trying to debug a problem we had with the USAD mobile platform earlier this year: the system experienced a crash, and we were not able to pinpoint a cause because the navigation stack did not use the logging facilities provided by the operating system, but rather was relying on its own approach. This meant that it would've been difficult to precisely determine when a specific error happened in the time domain of the whole system, and in our case that those application logs were completely lost because of a system crash.
+The problem of logging arose while trying to debug an issue we had with the USAD mobile platform earlier this year: the system experienced a crash, and we were not able to pinpoint a cause because the navigation stack did not use the logging facilities provided by the operating system, but was relying on a custom solution. For this reason, it would've been difficult to precisely determine when a specific error happened in the time domain of the whole system, even if the crash didn't wipe these application logs completely.
 
 To solve this problem, we've decided to use \texttt{syslog()}, which is the standard way to implement logging in Linux: this facility is well documented and comparably more performant than using printf() since there's no data actively written to the console.
 
@@ -318,7 +315,13 @@ To solve this problem, we've decided to use \texttt{syslog()}, which is the stan
 \caption{Example demonstrating how a program might use \texttt{syslog()} to push warning messages to the global system log.}
 \end{listing}
 
-By far, the true benefit of using \texttt{syslog()} lies in the design of the Linux logging system itself: everything that's written to \texttt{/var/log/syslog} is timestamped and, when the file reaches a certain size, the older data is automatically backed up for later analysis before being overwritten, and powerful tools like \texttt{journalctl} can be used to interactively sift through the logs even if recovered from a local or remote backup.
+By far, the true benefit of using \texttt{syslog()} lies in the design of the Linux logging system itself: everything that's written to \texttt{/var/log/syslog} has a timestamp and, when the file reaches a set size, the logging daemon backs up the old data for later analysis before overwriting it, and powerful tools like \texttt{journalctl} let a system administrator interactively sift through the logs even if recovered from a local or remote backup.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{img/journalctl.jpeg}
+    \caption{Demonstration of the usage of \texttt{journalctl} for log analysis.}
+\end{figure}
 
 \todo{journalctl screenshot}
 
@@ -328,9 +331,9 @@ As we stated earlier, the \textit{adapters} provide a clean way to interact with
 
 \subsubsection{Communicating with the Otto mobile platform.}
 
-Currently, the demo application issues command to the Otto mobile platform via and FTDI UART using serial communications at 9600 Baud. The \texttt{a\_otto} adapter provides functions that wrap around the \texttt{read()} and \texttt{write()} system calls to communicate with Otto's STM32 microcontroller over the serial line. All the data that's passed through the serial port is encoded and decoded using the NanoPB library, an efficient implementation of Google's Protocol Buffers. A detailed description of Otto's communication protocol and its original implementation has been done by \textcite{fdila-bs-otto}.
+Presently, the demo application issues command to the Otto mobile platform via an FTDI UART using serial communications at 9600 Baud. The \texttt{a\_otto} adapter provides functions that wrap around the \texttt{read()} and \texttt{write()} system calls to communicate with Otto's STM32 microcontroller over the serial line. All the data passed through the serial port is encoded and decoded using the NanoPB library, an efficient implementation of Google's Protocol Buffers. A detailed description of Otto's communication protocol and its original implementation has been given by \textcite{fdila-bs-otto}.
 
-Getting serial communications to work reliably with our setup was quite cumbersome: since there's no guarantee that data will be pushed to the serial port while the Odometry module's thread currently scheduled, and a blocking \texttt{read()} cannot be used since it would introduce a potentially unbounded latency, some buffering is needed to ensure we don't lose data between iterations.
+Getting serial communications to work reliably with our setup was problematic: it's impossible, given Otto's current design, to synchronize the computer and the microcontroller in a way that guarantees us that data will pass through the serial port while the Odometry module's thread is executing. Using a blocking \texttt{read()} would solve this problem, but it would introduce an unbounded latency: the only way around this issue is using a non-blocking call in combination with some buffering.
 
 \begin{listing}[H]
 \inputminted[frame=single,framesep=10pt]{c}{snippets/otto-buffering.c}
@@ -338,25 +341,25 @@ Getting serial communications to work reliably with our setup was quite cumberso
 \end{listing}
 
 \section{Future Development}
+While a good portion of the groundwork has been completed, the demo in its current state is just a little more than a proof of concept: to make it a usable product for controlling mobile platforms, some "bona fide" interfaces must still be standardized.
 
-While a good portion of the groundwork has been done, the demo in its current state is just a little more than a proof of concept: to render it a usable product for controlling mobile platforms, a wide number of interfaces that have been created "bona fide" need to be standardized.
+The most critical parts that we've yet to define are a system to track the creation of threads, which is currently done rather crudely in \texttt{main()}, and a standard mechanism for inter-module communication, which is probably one of the most fundamental aspects of such a system.
 
-The most critical parts that we've yet to define are a system to track the creation of threads, which is currently done rather crudely in \texttt{main()}, and a standard mechanism for inter-module communication.
-
-The topic of communications is probably one of the most important aspects of such a system, we've thrown some ideas on the table, including:
+Some other ideas that we've not been able to pursue are:
 
 \begin{itemize}
     \item The possibility of adding adapters that work on sockets instead of hardware devices, to extend the framework to a multi-node scenario;
     \item The development of a benchmark for inter-thread communication primitives in a real-time scenario, that would let us measure the impact of each locking mechanism (semaphores, mutexes, pipes, et cetera) on latency and processing time.
 \end{itemize}
 
-This delicate argument ultimately needs careful planning and testing before a standard interface can be defined.
+Those delicate topics need careful planning and testing before a set of standard interfaces can be defined.
 
 \newpage
 % Ch3
 \chapter{Implementation Issues}
+\todo{unfinished chapter}
 
-During the development of our demo, we've encountered a number of issues that, while not integral to the purpose of this document, have had a notable impact on the design and implementation process of the application: keeping those out of this report wouldn't have been fair, so we've decided to include them in this appendix. 
+While developing this demo, we've encountered some issues that, while not integral to the purpose of this document, have had a notable impact on the design and implementation process of the application: keeping those out of this report wouldn't have been fair, so we've decided to include them in this appendix. 
 
 \section{Patching and building the kernel}
 
@@ -375,11 +378,11 @@ http://kernel-notes.gbittencourt.net/compiling-preempt-rt/
 
 \section{Emulating the mobile platform}
 
-Due to logistics issues caused by the COVID-19 pandemic, the IRAlab team has not been able to deploy the Otto mobile platform for several months: this posed a serious problem, since we could not use it for developing the \texttt{a\_otto} adapter.
+Due to logistics issues caused by the COVID-19 pandemic, the IRAlab team has not been able to deploy the Otto mobile platform for several months: this posed a serious problem since we could not use it for developing the \texttt{a\_otto} adapter.
 
 To work around this problem, we've set out to simulate Otto's communication stack by using an ESP8266 (NodeMCU "amica" 1.0) and providing dummy data to the demo's odometry module for testing. 
 
-This eventually caused a deluge of problems, since the two platforms behave in slightly different ways and it was a serious setback.
+This eventually caused a deluge of issues since the two platforms behave in slightly different ways, and it was a huge setback.
 
 \section{External impact on RT performance}
 
