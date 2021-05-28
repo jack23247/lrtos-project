@@ -61,7 +61,7 @@
 \setlength{\parskip}{1em}
 % Ch0
 \chapter*{Acknowledgements}
-A special thanks for the continued support and previous work on Otto, ROS and the USAD platform goes to Domenico Sorrenti, Federica Di Lauro, Simone Fontana, Carlo Radice, Giovanni Capra and Riccardo Curnis of the IRAlab team, and to the former IRAlab member Augusto Luis Ballardini.
+A special "thank you" for the continued support and previous work on Otto, ROS and the USAD platform goes to Domenico Sorrenti, Federica Di Lauro, Simone Fontana, Carlo Radice, Giovanni Capra and Riccardo Curnis of the IRAlab team, and to the former IRAlab member Augusto Luis Ballardini.
 
 % Ch1
 \chapter{Summary}
@@ -76,36 +76,32 @@ A possible solution to this problem is carefully designing a system built around
 
 For this reason, many software houses have been working on various commercial solutions since the 1980s that enabled programmers and engineers to deploy their application on proven grounds, thus reducing the time and effort needed to create a real-time application. Arguably, the best aspect of those systems was their widespread availability: for example, DEC's VAXeln used lightly modified VAX computers, and Quantum Computer Inc. QNX ran on consumer-grade hardware, including x86 processors. While the VAXeln is now a historical platform, QNX is still commercially available from BlackBerry Limited and major companies such as Apple use it for their products \cite{time-carplay-qnx}.
 
-However, having always demonstrated an incredible flexibility, the ubiquitous Linux kernel is becoming a viable option for robotics and real-time usage, with both academic and commercial applications exploiting it like Tesla Motors, which maintains its own fork \cite{gh-tesla-linux}.
+However, having always demonstrated incredible versability, the ubiquitous Linux kernel is becoming a viable option for robotics and real-time usage, with both academic and commercial applications exploiting it like Tesla Motors, which maintains its own fork \cite{gh-tesla-linux}.
 
-Of course, this flexibility comes at the cost of reduced effectiveness in each specific situation, so why do both academic and commercial researchers decide to use Linux? For example:
+Of course, being flexible comes at the cost of reduced effectiveness in each specific situation, so why do many endeavors use Linux? Possibly because:
 \begin{itemize}
-  \item Linux is free and comes at no cost.
-  \item Linux is open-source, so it might be tailored to specific needs with the right expertise.
-  \item Linux has a wide community of people constantly improving it, ensuring constant updates without any support contract.
+  \item Most Linux distributions come completely free of charge, so even low-budget organizations can afford to use them.
+  \item The Linux kernel and the GNU userland are open-source and can be modified to meet specific needs by people with the right expertise.
+  \item The Linux ecosystem has a wide community of developers who are constantly improving it, ensuring constant maintenance and security updates even for organizations without any support contract.
 \end{itemize}
 
-These, along with the fact that IRAlab has been running Linux on control systems for several years, are the reasons why we decided to adopt it for this project.
+These, along with the fact that IRAlab has already been running Linux on control systems for several years, are the reasons why we decided to adopt it for this project.
 
 \section{The current implementation}
 
 At the moment, most of IRAlab's mobile platforms are controlled by a master node running Ubuntu Linux 16.04 LTS and the ROS framework, which was created by Willow Garage as a rapid development platform for their PR2 robot and traces its roots into an even earlier effort by a team of researchers and students at Stanford University. 
 
-The name "Robot Operating System" is misleading: in fact, ROS is mostly an open-source middleware, that is a set of software libraries and tools that help you build robot applications, which actually needs an underlying operating system to run: currently, it may do so on both Unix-like operating systems such as Ubuntu GNU/Linux, BlackBerry QNX \cite{qnx-ros} and Apple macOS, and on some Microsoft Windows versions. For simplicity, throughout this report we'll use the term "ROS" to refer to the ROS+Linux combination.
+The name "Robot Operating System" is misleading: in fact, ROS is mostly an open-source middleware, that is a set of software libraries and tools that help you build robot applications, which needs an underlying operating system to run: currently, it may do so on both Unix-like operating systems such as Ubuntu GNU/Linux, BlackBerry QNX \cite{qnx-ros} and Apple macOS, and on some Microsoft Windows versions. For simplicity, we'll use the term "ROS" to refer to the ROS+Linux combination throughout this report.
 
 \subsection{Description}
 
-Currently, IRAlab mainly uses a modified ROS navigation stack for abstraction and rapid prototyping: through the use of \textit{topics} and \textit{messages}, ROS provides a facility to let the users write small programs, called \textit{nodes}, and make them communicate with each other. A \textit{master node}, provided by the framework, acts as a central hub, keeping tabs on the state of the \textit{Computational Graph}. Moreover, ROS provides extensive \textit{timestamping} and data logging facilities, letting the user easily track, monitor and simulate a mobile platform's behavior.
+Currently, IRAlab mainly uses a modified ROS navigation stack for abstraction and rapid prototyping: through the use of \textit{topics} and \textit{messages}, ROS provides a facility to let the users write small programs, called \textit{nodes}, and make them communicate with each other. A \textit{master node}, provided by the framework, acts as a central hub, keeping tabs on the state of the \textit{Computational Graph}. Moreover, ROS provides extensive \textit{timestamping} and data logging facilities, letting the user easily track, monitor, and simulate a mobile platform's behavior.
 
-An in-depth analysis of the ROS functionalities and usage in the context of our mobile platforms is beyond the scope of this report, but the same topic has received extensive coverage in earlier works by Gerosa* and Di Lauro \cite{fdila-bs-otto}.
-\todo{dilauro -> ???}
+An in-depth analysis of the ROS functionalities and usage in the context of our mobile platforms is beyond the scope of this report, but it has received extensive coverage in earlier works performed by IRAlab\todo{cita Dario Gerosa}.
 
 \subsection{Issues}
 
 The problem we encountered with ROS is its complexity: while it's easily modifiable and extensible, there is no simple way to control precisely how the nodes are scheduled. Finely tuning this behavior would imply heavily modifying the codebase, which is a very complex task.
-
-%%???
-% Moreover, the presence of a Master node and an inter-node communication protocol based on handshaking (much akin to how MTTQ operates)\todo{cite?} makes it difficult to precisely control timing, unless the whole node setup is performed offline.
 
 Ultimately, some parts of ROS are written in Python \cite{roswiki-rospy}, which is an interpreted (or rather JIT-compiled) language. Python is notoriously hard to control in a real-time environment since it uses facilities like garbage collection \cite{python-devguide-gc} and dynamic allocation that are not designed to obey real-time constraints. The easiest way to avoid this problem is to use a language such as C, which gives the programmer more control over the timing and scheduling of the threads.
 
@@ -121,11 +117,11 @@ It's impossible to know whether or not such a solution would be suitable for you
 
 \subsubsection{Robot Operating System, version 2}
 
-ROS version 2 is the new generation of the ROS platform which was launched in 2015, and has reached its seventh release. The designers of ROS 2 put more focus on the real-time needs of the robotics industry in an attempt to solve the shortcomings of ROS \cite{ros2-realtime-intro}, as it pipelines tasks in a very different way and uses an enterprise-grade communications subsystem that is much more RT-friendly \todo{cite}.
+ROS 2, the new generation of the ROS platform, was launched in 2015 and has reached its seventh release, and was subject to a complete redesign revolving around an enterprise-grade communications subsystem that is much more RT-friendly \cite{dds-design-performance}, in an attempt to solve the shortcomings of ROS \cite{ros2-realtime-intro}. 
 
-Keeping the ROS framework would've enabled us to benefit from real-time improvements without the burden of porting our whole navigation stack to an entirely new platform, thus reducing turnaround time significantly.
+Initially, we hoped that using this framework would've enabled us to benefit from the new real-time design without the burden of porting our navigation stack to an entirely new platform: this would've reduced turnaround time significantly. However, before we could evaluate those benefits, we determined that using ROS 2 would not let us precisely control the timing of the tasks.
 
-After some research, however, we've determined that using ROS 2 would not let us control the scheduling precisely enough, making it impossible to control the timing of a specific portion of code within a ROS 2 task with an RT-scheduler provided by Linux such as \texttt{RT} or \texttt{DEADLINE}. This limitation stems from the architecture of the scheduler used in ROS 2: instead of spawning one thread for each task, the framework uses one or more "super-threads", where a custom scheduling algorithm is in charge of scheduling a variable number of tasks. While this design should make the whole system behave in a more deterministic way compared to its predecessor, it's ultimately even more opaque to the underlying operating system (and to the programmer, for that matter) than the one that was used before.
+The architecture of ROS 2 makes it impossible for the programmer to precisely control the timing of a specific portion of code within a ROS 2 task with an RT-scheduler provided by Linux such as \texttt{RT} or \texttt{DEADLINE}. Specifically, the task pipeline in ROS 2 uses one or more "super-threads" inside of which a custom scheduling algorithm is in charge of scheduling a variable number of tasks\cite{ros2-rt-analysis}: while this design is more real-time friendly than its predecessor's, it's ultimately even more opaque to the underlying operating system, and thus to the programmer, than the previous one.
 
 \newpage
 % Ch2
@@ -180,7 +176,7 @@ The \texttt{PREEMPT\_RT} patch was introduced in 2005 to reduce the latency and 
 
 The goal of the patch is not to make the system faster but rather to eliminate virtually all of the mechanisms that introduce unbounded latencies in kernel space. By doing this, the RT kernel can improve the consistency of the system calls significantly \cite{dmoceri-benchmarking-rtlinux}, albeit with a moderate performance hit. A formal model of the Linux kernel latencies and a tool to analyze them have been developed by \textcite{demistifying-rt-latency}.
 
-Nowadays, the impact of \texttt{PREEMPT\_RT} may not be immediately obvious, as many of its features have trickled down from the patch to the mainline kernels over the last 16 years. The most notable examples, from an academic standpoint, are:
+Nowadays, the impact of \texttt{PREEMPT\_RT} may not be immediately obvious, as many of its features have trickled down from the patch to the mainline kernels over the last 16 years; the most notable examples, from an academic standpoint, are:
 
 \begin{itemize}
     \item The \textit{priority inheritance} system, which attempts to solve the well-discussed problem of priority inversion.
@@ -194,7 +190,7 @@ A thorough analysis of the topics we've briefly covered over this section has be
 
 \subsection{Scheduler}
 
-The other fundamental part of a real-time system is the scheduler: since kernel 2.6.22, when CFS replaced the older O(1) scheduler as the default scheduler \cite{lwn-cfs-merge}, Linux offers a complex and modular scheduling system based on several independent priority classes. 
+The other fundamental part of a real-time system is the scheduler: since kernel 2.6.22, when the Completely Fair Scheduler (CFS) replaced the older O(1) algorithm as the default scheduler \cite{lwn-cfs-merge}, Linux offers a complex and modular scheduling system based on several independent priority classes. 
 
 \begin{figure}[H]
     \centering
@@ -202,7 +198,7 @@ The other fundamental part of a real-time system is the scheduler: since kernel 
     \caption{The relationship between the scheduling classes provided by the Linux kernel}
 \end{figure}
 
-In each priority class, there may be several different \textit{scheduling policies} that a programmer or a system administrator might choose for a specific workload. In brief: 
+In each priority class, there may be several different \textit{scheduling policies} that a programmer or a system administrator might choose for a specific workload; briefly: 
 
 \begin{itemize}
     \item \texttt{STOP}: This is the highest priority class, and it's used in kernel space to pin portions of code on specific cores in an SMP setting.
@@ -219,7 +215,7 @@ For a more detailed description of the scheduling classes, refer to \texttt{sche
 %% brief history of sched-edf and who's behind it
 \texttt{DEADLINE} is a scheduler developed by Dario Faggioli et al. \cite{lwn-faggioli-mail} that's been available in Linux since kernel 3.14 \cite{kn-linux-314}. This scheduler allows the programmer to define and schedule tasks using an Earliest Deadline First (EDF) algorithm, combined with a mechanism called Constant Bandwidth Server (CBS) to perform resource reservation \cite{cbs-algorithm}.
 
-From a programming standpoint, \texttt{SCHED\_DEADLINE} exposes a rich interface to the scheduler that a developer can use to tune the behavior and constraints of a real-time task. The most fundamental parameters that we can tune are: 
+From a programming standpoint, \texttt{SCHED\_DEADLINE} exposes a rich interface to the scheduler that a developer can use to tune the behavior and constraints of a real-time task. The most fundamental parameters are: 
 
 \begin{itemize}
     \item The \textit{period}, or the interval at which the scheduler will allow the task to run again after it yielded.
@@ -227,7 +223,7 @@ From a programming standpoint, \texttt{SCHED\_DEADLINE} exposes a rich interface
     \item The \textit{runtime}, or the task's expected worst-case execution time.
 \end{itemize}
 
-The EDF algorithm is known in the literature for its reliability and ability to fully utilize the system's computational resources, making it ideal for our demo's purposes.
+The EDF algorithm is well-known in the literature for its reliability and ability to fully utilize the system's computational resources\cite{buttazzo-hard-rt}, making it ideal for our demo's purposes.
 
 \section{Implementation}
 
@@ -293,7 +289,7 @@ Besides keeping a time base and calculating deltas, the \texttt{h\_time} helper 
 
 \subsubsection{Performance and average latency}
 
-To measure the performance of our timing system, we've developed a small test suite: exploiting the same design used for the Odometry module, a thread performing 100 die rolls is scheduled with a period of 20ms and a deadline of 11ms. At first, we used \texttt{RDRAND}, which takes a fair amount of clock cycles,  to simulate the die rolls, but the lack of said instruction on Intel® Core™ processors based on the Sandy Bridge (2nd gen) architecture forced us to go back to a more traditional, but less intensive, \texttt{srand()}/\texttt{rand()} approach.
+To measure the performance of our timing system, we've developed a small test suite: exploiting the same design used for the Odometry module, a thread performing 100 die rolls is scheduled with a period of 20ms and a deadline of 11ms. At first, we used \texttt{RDRAND}, which takes a fair amount of clock cycles,  to simulate the die rolls, but the lack of said instruction on Intel Core processors based on the Sandy Bridge (2nd gen) architecture forced us to go back to a more traditional, but less intensive, \texttt{srand()}/\texttt{rand()} approach.
 
 Before each die-rolling cycle, the \texttt{CLOCK\_MONOTONIC} timer is queried with the method described above: this gives us a fair idea of how much skew there is between the expected 20ms interval between each iteration and the time it took the kernel to run our code.
 
@@ -302,7 +298,7 @@ Before each die-rolling cycle, the \texttt{CLOCK\_MONOTONIC} timer is queried wi
 \caption{By running this payload with a specific scheduler, useful data about the average jitter in different conditions can be gathered.}
 \end{listing}
 
-\todo{present the results (aka perform more tests before 31/05!)}
+\todo{present the results (aka try the same kernel with and without RT on melchior before 31/05!)}
 
 \subsection{Logging}
 
@@ -349,56 +345,60 @@ Some other ideas that we've not been able to pursue are:
 
 \begin{itemize}
     \item The possibility of adding adapters that work on sockets instead of hardware devices, to extend the framework to a multi-node scenario;
-    \item The development of a benchmark for inter-thread communication primitives in a real-time scenario, that would let us measure the impact of each locking mechanism (semaphores, mutexes, pipes, et cetera) on latency and processing time.
+    \item The development of a benchmark for inter-thread communication primitives that would let us measure the impact of each locking mechanism (semaphores, mutexes, pipes, et cetera) on latency and processing time.
 \end{itemize}
 
 Those delicate topics need careful planning and testing before a set of standard interfaces can be defined.
 
 \newpage
 % Ch3
+\appendix
 \chapter{Implementation Issues}
-\todo{unfinished chapter}
 
-While developing this demo, we've encountered some issues that, while not integral to the purpose of this document, have had a notable impact on the design and implementation process of the application: keeping those out of this report wouldn't have been fair, so we've decided to include them in this appendix. 
+While developing this demo, we’ve encountered some issues that, while not integral to the purpose of this document, have had a notable impact on the design and implementation process of the application: this chapter briefly summarizes them.
 
-\section{Patching and building the kernel}
-
-Due to the fact that the preempt-rt patch has still not been mainlined, it was necessary to rebuild the kernel. 
-
-http://kernel-notes.gbittencourt.net/compiling-preempt-rt/
-
-\begin{itemize}
-    \item Download https://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/tag/?h=v5.4.74-rt41-rebase and untar (~900MB of sources) and cd
-    \item \texttt{cp /boot/config-\$(uname -r) .config}
-    \item \texttt{make olddefconfig}
-    \item \texttt{make -j \$(nproc) deb-pkg}
-    \item Wait ~4Hrs
-    \item Install the deb pkgs and reboot
-\end{itemize}
+%https://access.redhat.com/documentation/en-us/red_hat_enterprise_linux_for_real_time/8/html/tuning_guide/chap-realtime-specific_tuning
 
 \section{Emulating the mobile platform}
 
-Due to logistics issues caused by the COVID-19 pandemic, the IRAlab team has not been able to deploy the Otto mobile platform for several months: this posed a serious problem since we could not use it for developing the \texttt{a\_otto} adapter.
+Due to the logistic nightmare caused by the COVID-19 pandemic, the IRAlab team has not been able to source the necessary components to fix the Otto mobile platform for several months, meaning that we could not use the robot for designing and testing the demo. This posed a serious problem since the \texttt{a\_otto} adapter is heavily used by the odometry.
 
-To work around this problem, we've set out to simulate Otto's communication stack by using an ESP8266 (NodeMCU "amica" 1.0) and providing dummy data to the demo's odometry module for testing. 
+To work around this problem, we've set out to simulate Otto's communication stack by using an ESP8266 microcontroller and UART on a NodeMCU "amica" 1.0 protoboard, and providing dummy data to the demo's odometry module for testing. 
 
-This eventually caused a deluge of issues since the two platforms behave in slightly different ways, and it was a huge setback.
+While we've tried to follow Otto's specification as closely as possible, and this meant that we could work on integrating the NanoPB library in our code, we could not iron out all the differences: this eventually caused a deluge of issues since the behavior of Otto was slightly more comples, and making it work reliably was a major setback.
 
 \section{External impact on RT performance}
 
-\subsection{Processor features and hardware components}
-\begin{itemize}
-    \item Caches
-    \item CPU Threads (SMT)
-    \item CPU Cores (SMP)
-    \item Intel Management Engine (ME) and AMD Secure Platform (PSP)
-    \item Power saving states, suspension, hybernation and clock boost
-\end{itemize}
+\subsection{Processor features}
 
-CPUSETS solve the problem of SMP (and SMT, to some extent) by locking specific processes (as in thread groups) to a partition of the available processors (or cores).
+\subsubsection{Caches}
+
+Modern CPUs and APUs all employ a multilayered cache architecture to reduce data access times significantly: while having big static RAM chips is not economically viable, relatively small-sized ones such as the caches allow chip designers to boost performance without adding too much cost. 
+
+However, for the real-time application developer, cache memory is a necessary evil: while disabling it would be too detrimental to performance, the significant miss penalty means that performing static timing analysis on real-time code running on a modern x86 processor can be complicated.
+
+\subsubsection{Multiprocessing}
+
+Multiprocessing (MP) is a common practice in modern computing systems: most microprocessors and even some microcontrollers contain several copies of themselves, called "cores" that work in parallel and exchange data using high-speed on-die buses to multiply the available processing power.
+
+While MP itself is not detrimental to real-time performance, it requires some attention: if two cores try to access the same memory address, the processor will stall one of them, introducing an unbounded latency.   
+
+Moreover, if a task running on a core gets rescheduled by the operating system on another, a scheduling penalty might occur: to avoid this problem, access to the system's processing resources must be regulated. 
+
+The Linux kernel provides several ways to manage a multiprocessor environment, such as the \texttt{cpuset(7)} \cite{man-cpuset-7}, a facility used to pin specific tasks to one or more cores, or as the \texttt{isolcpus} kernel flag that forces specific cores out of the kernel's load balancer. 
+
+\subsubsection{Other facilities}
+
+Other facilities like multithreading and clock scaling introduce non-determinism due to their design and operating principles but can regularly be disabled in the BIOS settings.
+
+However, there are some features that cannot be disabled on most systems, like the Intel Management Engine (ME) and its AMD counterpart Secure Processor (AMD-SP), which are not auditable due to their obfuscation, thus their impact on real-time performance is unknown.
 
 \subsection{Filesystem and I/O performance}
 
+While the I/O architecture of Linux has been well documented and analyzed in the literature, the impact of disk I/O, and specifically of the filesystem on application, performance has not. The lack of research material in this field can probably be attributed to the rarity of real-time disk I/O bound workloads, but it's an interesting topic nonetheless.
+
 % Tail
-\printbibliography
+\printbibliography[nottype=online,title={Bibliography}]
+\printbibliography[type=online,title={Sitography}]
+
 \end{document}

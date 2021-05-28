@@ -18,7 +18,7 @@
 	keywords     = {apple,carplay,qnx}
 }
 
-@misc{gh-tesla-linux,
+@online{gh-tesla-linux,
 	organization = {Tesla Motors},
 	title        = {Tesla {Linux} for {Tegra}},
 	year         = 2020,
@@ -97,6 +97,7 @@
 	year        = {2010},
     abstract    = {This paper provides precise methods to measure the clock cycles spent when executing a certain C code on a Linux* environment with a generic Intel architecture processor (either 32 bits or 64 bits).},
     keywords    = {ia32,x86,rdtsc,timers},
+    url         = {https://www.intel.com/content/www/us/en/embedded/training/ia-32-ia-64-benchmark-code-execution-paper.html}
 }
 
 @online{man-clock-getres-2,
@@ -107,7 +108,7 @@
 	keywords     = {linux,man,timers}
 }
 
-@techreport{fdila-bs-otto,
+@report{fdila-bs-otto,
 	author      = {Federica {Di Lauro}},
 	title       = {Sistema di controllo per base robotica outdoor},
 	year        = {2020},
@@ -265,4 +266,49 @@
     keywords = {real-time scheduling, resource reservations, temporal isolation},
     location = {Grenoble, France},
     series = {RTNS '17}
+}
+
+@book{buttazzo-hard-rt,
+    author = {Giorgio {Buttazzo}},
+    title = {Hard real-time computing systems: predictable scheduling algorithms and applications},
+    publisher = {Springer},
+    year = {2011},
+    address = {New York},
+    isbn = {978-1-4614-0675-4}
+}
+
+@article{ros2-rt-analysis,
+    author =	{Daniel Casini and Tobias Bla{\ss} and Ingo L{\"u}tkebohle and Bj{\"o}rn B. Brandenburg},
+    title =	{{Response-Time Analysis of ROS 2 Processing Chains Under Reservation-Based Scheduling (Artifact)}},
+    pages =	{5:1--5:2},
+    journal =	{Dagstuhl Artifacts Series},
+    ISSN =	{2509-8195},
+    year =	{2019},
+    volume =	{5},
+    number =	{1},
+    publisher =	{Schloss Dagstuhl--Leibniz-Zentrum fuer Informatik},
+    address =	{Dagstuhl, Germany},
+    URL =		{http://drops.dagstuhl.de/opus/volltexte/2019/10733},
+    URN =		{urn:nbn:de:0030-drops-107330},
+    doi =		{10.4230/DARTS.5.1.5},
+    annote =	{Keywords: ROS, real-time systems, response-time analysis, robotics, resource reservation}
+}
+
+@inproceedings{dds-design-performance,
+    title={Design and Performance of DDS-based Middleware for Real- Time Control Systems},
+    author={T. Guesmi and R. Rekik and S. Hasnaoui and H. Rezig},
+    booktitle =	{International Journal of Computer Science and Network Security},
+    year={2007},
+    volume =	{7},
+    number =	{12},
+    url = {https://community.rti.com/content/paper/design-and-performance-dds-based-middleware-real-time-control-systems}
+}
+
+@online{man-cpuset-7,
+	organization = {The Linux \textit{man-pages} project},
+	title        = {\texttt{cpuset(7)}},
+	url          = {
+https://man7.org/linux/man-pages/man7/cpuset.7.html},
+	addendum     = "(accessed: 28/05/2021)",
+	keywords     = {linux,man,multiprocessor}
 }
