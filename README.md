@@ -1,2 +1,2 @@
 # lrtos-project
-Linux as a Real Time Operating System - Bachelor's thesis
+Linux as a Real Time Operating System - Final Report
